@@ -163,7 +163,7 @@ export function SimulationControls({
           className="flex-1"
         >
           <Play className="w-4 h-4 mr-2" />
-          {isRunning ? 'Applying...' : 'Apply Factors'}
+          {isRunning ? 'Generating...' : 'Recommend'}
         </Button>
         
         <Button 

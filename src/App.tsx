@@ -7,6 +7,7 @@ import { FixedGridMap } from './components/FixedGridMap';
 import { SimulationControls } from './components/SimulationControls';
 import { KPIMetrics } from './components/KPIMetrics';
 import { InterventionPanel } from './components/InterventionPanel';
+import { RecommendationPanel } from './components/RecommendationPanel';
 import { Map, BarChart3, Settings, TrendingUp, Search } from 'lucide-react';
 import { Input } from './components/ui/input';
 import { Label } from './components/ui/label';
@@ -67,6 +68,15 @@ interface SimulationParameters {
   publicTransport: number;
 }
 
+interface Recommendation {
+  intervention: string;
+  explanation: string;
+  reductionPercent: number;
+  cellId: string;
+  cellType: string;
+  emission: number;
+}
+
 export default function App() {
   // State
   const [selectedCell, setSelectedCell] = useState<GridCell | null>(null);
@@ -74,7 +84,8 @@ export default function App() {
   const [isSimulationRunning, setIsSimulationRunning] = useState(false);
   const [currentScenario, setCurrentScenario] = useState('Default Scenario');
   const [showInterventions, setShowInterventions] = useState(true);
-  const [recommendations, setRecommendations] = useState<any[]>([]);
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [showRecommendations, setShowRecommendations] = useState(false);
 
   // Prediction parameters
   const [locationQuery, setLocationQuery] = useState<string>('');
@@ -339,16 +350,21 @@ export default function App() {
 
   const handleRunSimulation = () => {
     setIsSimulationRunning(true);
-    toast.success('Applying factors...');
+    toast.success('Recalculating emissions and generating recommendations...');
 
     setTimeout(() => {
+      // Recalculate emissions based on current slider values
       updateGridDataFromParameters(parameters);
 
+      // Generate recommendations based on updated grid data
       const recs = generateRecommendations();
       setRecommendations(recs);
 
+      // Show the recommendation panel
+      setShowRecommendations(true);
+
       setIsSimulationRunning(false);
-      toast.success('Factors applied successfully!');
+      toast.success('Recommendations generated successfully!');
     }, 1000);
   };
 
@@ -374,47 +390,87 @@ export default function App() {
   };
 
   const handleRemoveIntervention = (interventionId: string) => {
-    const [cellId] = interventionId.split('-');
+    // Parse the interventionId: format is "cellId-interventionTypeId"
+    // cellId is "x-y" format, so we need to extract it properly
+    const parts = interventionId.split('-');
+    
+    // Cell ID is always "x-y" (first two parts), intervention type ID is the rest
+    // Handle cases where intervention type ID might also contain dashes
+    let cellId: string;
+    let interventionTypeId: string;
+    
+    // Try to find a valid cell ID pattern (x-y where x and y are digits)
+    // Since cell.id is always "x-y", we can safely assume first two parts are cellId
+    if (parts.length >= 3) {
+      // cellId is "x-y", interventionTypeId is everything after
+      cellId = `${parts[0]}-${parts[1]}`;
+      interventionTypeId = parts.slice(2).join('-');
+    } else {
+      // Fallback: assume first part is cellId (shouldn't happen with current format)
+      cellId = parts[0];
+      interventionTypeId = parts.slice(1).join('-');
+    }
     
     setGridData(prev => prev.map(cell => 
       cell.id === cellId 
-        ? { ...cell, interventions: cell.interventions.filter((_, idx) => `${cellId}-${idx}` !== interventionId) }
+        ? { 
+            ...cell, 
+            interventions: cell.interventions.filter(intervention => intervention.id !== interventionTypeId)
+          }
         : cell
     ));
   
     toast.success('Intervention removed');
   };
   
-  /* ✅ ADD THIS FUNCTION HERE */
-  const generateRecommendations = () => {
-    const recs: any[] = [];
+  // Generate recommendations: 1 best + 3 alternatives
+  const generateRecommendations = (): Recommendation[] => {
+    const recs: Recommendation[] = [];
   
-    gridData.forEach((cell) => {
-      if (cell.emission < 80) return;
+    // Get all cells with emissions, sorted by emission (highest first)
+    const highEmissionCells = gridData
+      .filter(cell => cell.emission > 0)
+      .sort((a, b) => b.emission - a.emission);
   
-      let suggestion = "";
+    // Generate recommendations for top cells
+    highEmissionCells.forEach((cell) => {
+      let intervention = "";
+      let explanation = "";
+      let reductionPercent = 0;
   
       if (cell.type === "industrial") {
-        suggestion = "Install Industrial CO₂ Capture Unit (High efficiency)";
+        intervention = "Industrial CO₂ Capture Unit";
+        explanation = "This area has high industrial emissions. A high-capacity capture unit will significantly reduce CO₂ output from manufacturing processes.";
+        reductionPercent = 35; // Based on availableInterventions efficiency
       } else if (cell.type === "commercial") {
-        suggestion = "Add Rooftop Garden + Solar Panels";
+        intervention = "Rooftop Garden + Solar";
+        explanation = "Commercial buildings in this zone can benefit from combined rooftop vegetation and solar panels, reducing both direct emissions and energy consumption.";
+        reductionPercent = 25; // Combined effect
       } else if (cell.type === "transport") {
-        suggestion = "Place Compact Capture System near traffic corridor";
+        intervention = "Compact Roadside Capture";
+        explanation = "High traffic emissions detected. A compact capture system placed near this transport corridor will capture vehicle emissions effectively.";
+        reductionPercent = 20;
       } else if (cell.type === "residential") {
-        suggestion = "Add Vertical Garden Wall for natural absorption";
+        intervention = "Vertical Garden Wall";
+        explanation = "Residential areas benefit from natural CO₂ absorption. A vertical garden wall provides both aesthetic value and emission reduction.";
+        reductionPercent = 15;
       }
   
-      recs.push({
-        cellId: cell.id,
-        emission: cell.emission,
-        type: cell.type,
-        suggestion,
-      });
+      if (intervention) {
+        recs.push({
+          intervention,
+          explanation,
+          reductionPercent,
+          cellId: cell.id,
+          cellType: cell.type,
+          emission: cell.emission,
+        });
+      }
     });
   
-    return recs;
+    // Return top 4 (1 best + 3 alternatives)
+    return recs.slice(0, 4);
   };
-  /* END OF INSERT */
   
   // Location search function
   const searchLocation = async (query: string) => {
@@ -618,13 +674,12 @@ export default function App() {
         <div className="mb-6">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl">CO₂ Capture Digital Twin</h1>
+              <h1 className="text-3xl">VayuVision</h1>
               <p className="text-gray-600 mt-1">
                 Simulate, visualize, and plan carbon capture strategies for urban neighborhoods
               </p>
             </div>
             <div className="flex items-center gap-4">
-              <Badge variant="secondary">{currentScenario}</Badge>
               <Button 
                 variant="outline" 
                 size="sm"
@@ -720,35 +775,23 @@ export default function App() {
                 isRunning={isSimulationRunning}
                 currentScenario={currentScenario}
               />
-              <div className="lg:col-span-2">
-                <FixedGridMap
-                  cellEmissions={cellEmissions}
-                  onCellSelect={handleCellSelect}
-                />
-              </div>
-              <div className="p-4 bg-white border rounded-lg shadow-sm h-fit">
-                <h2 className="text-lg font-semibold mb-3">Recommended Interventions</h2>
-                {recommendations.length === 0 ? (
-                  <p className="text-gray-500">Run the simulation to generate recommendations.</p>
-                ) : (
-                  <ul className="space-y-3">
-                    {recommendations.map((rec, index) => (
-                      <li 
-                        key={index} 
-                        className="p-3 border rounded-lg bg-gray-50 shadow-sm"
-                      >
-                        <p className="font-medium">Cell: {rec.cellId}</p>
-                        <p className="text-sm text-gray-600">
-                          Emission: <span className="font-semibold">{rec.emission.toFixed(1)}</span>
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          Zone Type: <span className="font-semibold capitalize">{rec.type}</span>
-                        </p>
-                        <p className="mt-2 text-black font-semibold">{rec.suggestion}</p>
-                      </li>
-                    ))}
-                  </ul>
-                )}
+              {/* Map and Recommendation Panel side by side */}
+              <div className="lg:col-span-2 flex flex-col lg:flex-row gap-4 items-start">
+                {/* Map - takes 65-70% of the space */}
+                <div className="w-full lg:w-[68%] flex-shrink-0">
+                  <FixedGridMap
+                    cellEmissions={cellEmissions}
+                    onCellSelect={handleCellSelect}
+                  />
+                </div>
+                {/* Recommendation Panel - takes remaining space */}
+                <div className="w-full lg:w-[32%] flex-shrink-0">
+                  <RecommendationPanel
+                    recommendations={recommendations}
+                    isVisible={showRecommendations}
+                    onToggleVisibility={() => setShowRecommendations(!showRecommendations)}
+                  />
+                </div>
               </div>
             </div>
           </TabsContent>

@@ -7,7 +7,24 @@ import { FixedGridMap } from './components/FixedGridMap';
 import { SimulationControls } from './components/SimulationControls';
 import { KPIMetrics } from './components/KPIMetrics';
 import { InterventionPanel } from './components/InterventionPanel';
-import { Map, BarChart3, Settings } from 'lucide-react';
+import { Map, BarChart3, Settings, TrendingUp, Search } from 'lucide-react';
+import { Input } from './components/ui/input';
+import { Label } from './components/ui/label';
+import { Slider } from './components/ui/slider';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './components/ui/table';
+import {
+  LineChart,
+  Line,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  CartesianGrid,
+} from 'recharts';
 
 
 // Types
@@ -57,6 +74,19 @@ export default function App() {
   const [isSimulationRunning, setIsSimulationRunning] = useState(false);
   const [currentScenario, setCurrentScenario] = useState('Default Scenario');
   const [showInterventions, setShowInterventions] = useState(true);
+  const [recommendations, setRecommendations] = useState<any[]>([]);
+
+  // Prediction parameters
+  const [locationQuery, setLocationQuery] = useState<string>('');
+  const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lon: number; name: string } | null>(null);
+  const [populationGrowth, setPopulationGrowth] = useState<number>(0);
+  const [vehicleGrowth, setVehicleGrowth] = useState<number>(0);
+  const [industrialGrowth, setIndustrialGrowth] = useState<number>(0);
+  const [residentialGrowth, setResidentialGrowth] = useState<number>(0);
+  const [commercialGrowth, setCommercialGrowth] = useState<number>(0);
+  const [predictionYears, setPredictionYears] = useState<number>(5);
+  const [predictionResults, setPredictionResults] = useState<Array<{ year: number; emission: number }>>([]);
+  const [showCharts, setShowCharts] = useState<boolean>(true);
 
   // Simulation parameters - new factors
   const [parameters, setParameters] = useState<SimulationParameters>({
@@ -310,9 +340,13 @@ export default function App() {
   const handleRunSimulation = () => {
     setIsSimulationRunning(true);
     toast.success('Applying factors...');
-    
+
     setTimeout(() => {
       updateGridDataFromParameters(parameters);
+
+      const recs = generateRecommendations();
+      setRecommendations(recs);
+
       setIsSimulationRunning(false);
       toast.success('Factors applied successfully!');
     }, 1000);
@@ -347,9 +381,235 @@ export default function App() {
         ? { ...cell, interventions: cell.interventions.filter((_, idx) => `${cellId}-${idx}` !== interventionId) }
         : cell
     ));
-
+  
     toast.success('Intervention removed');
   };
+  
+  /* ✅ ADD THIS FUNCTION HERE */
+  const generateRecommendations = () => {
+    const recs: any[] = [];
+  
+    gridData.forEach((cell) => {
+      if (cell.emission < 80) return;
+  
+      let suggestion = "";
+  
+      if (cell.type === "industrial") {
+        suggestion = "Install Industrial CO₂ Capture Unit (High efficiency)";
+      } else if (cell.type === "commercial") {
+        suggestion = "Add Rooftop Garden + Solar Panels";
+      } else if (cell.type === "transport") {
+        suggestion = "Place Compact Capture System near traffic corridor";
+      } else if (cell.type === "residential") {
+        suggestion = "Add Vertical Garden Wall for natural absorption";
+      }
+  
+      recs.push({
+        cellId: cell.id,
+        emission: cell.emission,
+        type: cell.type,
+        suggestion,
+      });
+    });
+  
+    return recs;
+  };
+  /* END OF INSERT */
+  
+  // Location search function
+  const searchLocation = async (query: string) => {
+    if (!query.trim()) {
+      toast.error('Please enter a location to search');
+      return;
+    }
+
+    try {
+      const encodedQuery = encodeURIComponent(query);
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodedQuery}&format=json&limit=1`,
+        {
+          headers: {
+            'User-Agent': 'CO2-Capture-Digital-Twin/1.0'
+          }
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (!data || data.length === 0) {
+        toast.error('Location not found. Please try a different search term.');
+        return;
+      }
+
+      const firstResult = data[0];
+      const lat = parseFloat(firstResult.lat);
+      const lon = parseFloat(firstResult.lon);
+      const name = firstResult.display_name || query;
+
+      if (isNaN(lat) || isNaN(lon)) {
+        throw new Error('Invalid coordinates received from API');
+      }
+
+      setSelectedLocation({ lat, lon, name });
+      toast.success(`Location selected: ${name}`);
+    } catch (error) {
+      console.error('Error searching location:', error);
+      toast.error('Failed to search location. Please try again.');
+    }
+  };
+
+  // Monte Carlo Prediction Function
+  const runMonteCarloPrediction = () => {
+    const currentYear = new Date().getFullYear();
+    const startEmission = currentKPIs.totalEmissions;
+    const predictedData: Array<{ year: number; emission: number }> = [];
+
+    // For each prediction year
+    for (let yearOffset = 1; yearOffset <= predictionYears; yearOffset++) {
+      const year = currentYear + yearOffset;
+      const simulationResults: number[] = [];
+
+      // Run 500 Monte Carlo simulations for this year
+      for (let run = 0; run < 500; run++) {
+        // Start with previous year's emission (or start emission for first year)
+        let emission = yearOffset === 1 ? startEmission : predictedData[yearOffset - 2].emission;
+
+        // Apply random variations to each growth factor
+        // Population growth: ±0.5 variation
+        const popVariation = (Math.random() * 2 - 1) * 0.5; // Random between -0.5 and 0.5
+        emission *= (1 + (populationGrowth * 0.01) * (1 + popVariation));
+
+        // Vehicle growth: ±0.4 variation
+        const vehicleVariation = (Math.random() * 2 - 1) * 0.4; // Random between -0.4 and 0.4
+        emission *= (1 + (vehicleGrowth * 0.01) * (1 + vehicleVariation));
+
+        // Industrial growth: ±0.6 variation
+        const industrialVariation = (Math.random() * 2 - 1) * 0.6; // Random between -0.6 and 0.6
+        emission *= (1 + (industrialGrowth * 0.01) * (1 + industrialVariation));
+
+        // Residential growth: ±0.3 variation
+        const residentialVariation = (Math.random() * 2 - 1) * 0.3; // Random between -0.3 and 0.3
+        emission *= (1 + (residentialGrowth * 0.01) * (1 + residentialVariation));
+
+        // Commercial growth: ±0.3 variation
+        const commercialVariation = (Math.random() * 2 - 1) * 0.3; // Random between -0.3 and 0.3
+        emission *= (1 + (commercialGrowth * 0.01) * (1 + commercialVariation));
+
+        simulationResults.push(emission);
+      }
+
+      // Calculate mean of 500 runs
+      const meanEmission = simulationResults.reduce((sum, val) => sum + val, 0) / simulationResults.length;
+      
+      predictedData.push({
+        year,
+        emission: meanEmission
+      });
+    }
+
+    // Save to state
+    setPredictionResults(predictedData);
+  };
+
+  // Calculate sector contributions for pie chart
+  const calculateSectorContributions = () => {
+    if (predictionResults.length === 0) return [];
+
+    // Get the latest year's emission
+    const latestEmission = predictionResults[predictionResults.length - 1].emission;
+    
+    // Calculate sector contributions based on growth factors
+    // Normalize growth factors to get proportions
+    const totalGrowth = industrialGrowth + residentialGrowth + commercialGrowth + vehicleGrowth + (populationGrowth * 0.5);
+    
+    if (totalGrowth === 0) {
+      // Equal distribution if no growth
+      return [
+        { name: 'Industrial', value: latestEmission * 0.25, color: '#ef4444' },
+        { name: 'Residential', value: latestEmission * 0.25, color: '#22c55e' },
+        { name: 'Commercial', value: latestEmission * 0.25, color: '#3b82f6' },
+        { name: 'Transport', value: latestEmission * 0.25, color: '#f59e0b' },
+      ];
+    }
+
+    const industrialShare = industrialGrowth / totalGrowth;
+    const residentialShare = residentialGrowth / totalGrowth;
+    const commercialShare = commercialGrowth / totalGrowth;
+    const transportShare = vehicleGrowth / totalGrowth;
+    const populationShare = (populationGrowth * 0.5) / totalGrowth;
+
+    // Distribute population growth across sectors
+    const industrialFinal = industrialShare + (populationShare * 0.2);
+    const residentialFinal = residentialShare + (populationShare * 0.3);
+    const commercialFinal = commercialShare + (populationShare * 0.3);
+    const transportFinal = transportShare + (populationShare * 0.2);
+
+    // Normalize to ensure they sum to 1
+    const sum = industrialFinal + residentialFinal + commercialFinal + transportFinal;
+    
+    return [
+      { name: 'Industrial', value: (latestEmission * industrialFinal / sum), color: '#ef4444' },
+      { name: 'Residential', value: (latestEmission * residentialFinal / sum), color: '#22c55e' },
+      { name: 'Commercial', value: (latestEmission * commercialFinal / sum), color: '#3b82f6' },
+      { name: 'Transport', value: (latestEmission * transportFinal / sum), color: '#f59e0b' },
+    ];
+  };
+
+  // Calculate prediction summary statistics
+  const calculatePredictionSummary = () => {
+    if (predictionResults.length === 0) {
+      return {
+        finalYearEmission: 0,
+        averageGrowthRate: 0,
+        highestContributingSector: 'N/A',
+        confidenceScore: 0,
+      };
+    }
+
+    // Final Year Emission
+    const finalYearEmission = predictionResults[predictionResults.length - 1].emission;
+    const initialEmission = currentKPIs.totalEmissions;
+
+    // Average Annual Growth Rate
+    const totalYears = predictionResults.length;
+    const totalGrowth = ((finalYearEmission - initialEmission) / initialEmission) * 100;
+    const averageGrowthRate = totalYears > 0 ? totalGrowth / totalYears : 0;
+
+    // Highest Contributing Sector (based on growth factors)
+    const sectors = [
+      { name: 'Industrial', growth: industrialGrowth },
+      { name: 'Residential', growth: residentialGrowth },
+      { name: 'Commercial', growth: commercialGrowth },
+      { name: 'Transport', growth: vehicleGrowth },
+    ];
+    const highestSector = sectors.reduce((max, sector) => 
+      sector.growth > max.growth ? sector : max
+    );
+
+    // Monte Carlo Confidence Score (based on variance)
+    // Lower variance = higher confidence
+    // We'll simulate variance by looking at the range of growth factors
+    const growthFactors = [industrialGrowth, residentialGrowth, commercialGrowth, vehicleGrowth, populationGrowth];
+    const maxGrowth = Math.max(...growthFactors);
+    const minGrowth = Math.min(...growthFactors);
+    const variance = maxGrowth - minGrowth;
+    // Confidence score: 0-100, higher variance = lower confidence
+    // Normalize: if variance is 0-20, confidence is 80-100
+    const confidenceScore = Math.max(0, Math.min(100, 100 - (variance * 2)));
+
+    return {
+      finalYearEmission,
+      averageGrowthRate,
+      highestContributingSector: highestSector.name,
+      confidenceScore,
+    };
+  };
+
+  const predictionSummary = calculatePredictionSummary();
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -377,21 +637,28 @@ export default function App() {
         </div>
 
         {/* Main Content */}
-        <Tabs defaultValue="dashboard" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="dashboard">
-              <BarChart3 className="w-4 h-4 mr-2" />
-              Dashboard
-            </TabsTrigger>
-            <TabsTrigger value="map">
-              <Map className="w-4 h-4 mr-2" />
-              Interactive Map
-            </TabsTrigger>
-            <TabsTrigger value="simulation">
-              <Settings className="w-4 h-4 mr-2" />
-              Simulation
-            </TabsTrigger>
-          </TabsList>
+<Tabs defaultValue="dashboard" className="w-full">
+          <TabsList className="w-full flex flex-row gap-2">
+            <TabsTrigger value="dashboard" className="flex-1">
+      <BarChart3 className="w-4 h-4 mr-2" />
+      Dashboard
+    </TabsTrigger>
+
+            <TabsTrigger value="map" className="flex-1">
+      <Map className="w-4 h-4 mr-2" />
+      Interactive Map
+    </TabsTrigger>
+
+            <TabsTrigger value="simulation" className="flex-1">
+      <Settings className="w-4 h-4 mr-2" />
+      Simulation
+    </TabsTrigger>
+
+            <TabsTrigger value="prediction" className="flex-1">
+              <TrendingUp className="w-4 h-4 mr-2" />
+              Prediction
+    </TabsTrigger>
+  </TabsList>
 
           <TabsContent value="dashboard" className="space-y-6">
             <KPIMetrics
@@ -458,6 +725,345 @@ export default function App() {
                   cellEmissions={cellEmissions}
                   onCellSelect={handleCellSelect}
                 />
+              </div>
+              <div className="p-4 bg-white border rounded-lg shadow-sm h-fit">
+                <h2 className="text-lg font-semibold mb-3">Recommended Interventions</h2>
+                {recommendations.length === 0 ? (
+                  <p className="text-gray-500">Run the simulation to generate recommendations.</p>
+                ) : (
+                  <ul className="space-y-3">
+                    {recommendations.map((rec, index) => (
+                      <li 
+                        key={index} 
+                        className="p-3 border rounded-lg bg-gray-50 shadow-sm"
+                      >
+                        <p className="font-medium">Cell: {rec.cellId}</p>
+                        <p className="text-sm text-gray-600">
+                          Emission: <span className="font-semibold">{rec.emission.toFixed(1)}</span>
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          Zone Type: <span className="font-semibold capitalize">{rec.type}</span>
+                        </p>
+                        <p className="mt-2 text-black font-semibold">{rec.suggestion}</p>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          </TabsContent>
+          <TabsContent value="prediction" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+              {/* Left Panel - Controls */}
+              <div className="flex flex-col h-[calc(100vh-250px)]">
+                <div className="flex-1 overflow-y-auto">
+            <div className="p-6 bg-white border rounded-lg shadow-sm">
+                    <h2 className="text-xl font-semibold mb-4">CO₂ Prediction Model</h2>
+                    
+                    {/* Location Search */}
+                    <div className="mb-6">
+                      <Label htmlFor="location-search" className="mb-2 block">
+                        Location Search
+                      </Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="location-search"
+                          type="text"
+                          placeholder="Enter location..."
+                          value={locationQuery}
+                          onChange={(e) => setLocationQuery(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              searchLocation(locationQuery);
+                            }
+                          }}
+                          className="flex-1"
+                        />
+                        <Button
+                          onClick={() => searchLocation(locationQuery)}
+                          className="bg-blue-600 text-white"
+                        >
+                          <Search className="w-4 h-4 mr-2" />
+                          Search
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Growth Factor Sliders */}
+                    <div className="space-y-6 mb-6">
+                      <div>
+                        <div className="flex justify-between items-center mb-2">
+                          <Label htmlFor="population-growth">Population Growth</Label>
+                          <span className="text-sm text-gray-600">{populationGrowth}%</span>
+                        </div>
+                        <Slider
+                          id="population-growth"
+                          min={0}
+                          max={10}
+                          step={0.1}
+                          value={[populationGrowth]}
+                          onValueChange={(value) => setPopulationGrowth(value[0])}
+                        />
+                      </div>
+
+                      <div>
+                        <div className="flex justify-between items-center mb-2">
+                          <Label htmlFor="vehicle-growth">Vehicle Growth</Label>
+                          <span className="text-sm text-gray-600">{vehicleGrowth}%</span>
+                        </div>
+                        <Slider
+                          id="vehicle-growth"
+                          min={0}
+                          max={15}
+                          step={0.1}
+                          value={[vehicleGrowth]}
+                          onValueChange={(value) => setVehicleGrowth(value[0])}
+                        />
+                      </div>
+
+                      <div>
+                        <div className="flex justify-between items-center mb-2">
+                          <Label htmlFor="industrial-growth">Industrial Growth</Label>
+                          <span className="text-sm text-gray-600">{industrialGrowth}%</span>
+                        </div>
+                        <Slider
+                          id="industrial-growth"
+                          min={0}
+                          max={20}
+                          step={0.1}
+                          value={[industrialGrowth]}
+                          onValueChange={(value) => setIndustrialGrowth(value[0])}
+                        />
+                      </div>
+
+                      <div>
+                        <div className="flex justify-between items-center mb-2">
+                          <Label htmlFor="residential-growth">Residential Growth</Label>
+                          <span className="text-sm text-gray-600">{residentialGrowth}%</span>
+                        </div>
+                        <Slider
+                          id="residential-growth"
+                          min={0}
+                          max={10}
+                          step={0.1}
+                          value={[residentialGrowth]}
+                          onValueChange={(value) => setResidentialGrowth(value[0])}
+                        />
+                      </div>
+
+                      <div>
+                        <div className="flex justify-between items-center mb-2">
+                          <Label htmlFor="commercial-growth">Commercial Growth</Label>
+                          <span className="text-sm text-gray-600">{commercialGrowth}%</span>
+                        </div>
+                        <Slider
+                          id="commercial-growth"
+                          min={0}
+                          max={10}
+                          step={0.1}
+                          value={[commercialGrowth]}
+                          onValueChange={(value) => setCommercialGrowth(value[0])}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Prediction Years Input */}
+                    <div className="mb-6">
+                      <Label htmlFor="prediction-years" className="mb-2 block">
+                        Prediction Years
+                      </Label>
+                      <Input
+                        id="prediction-years"
+                        type="number"
+                        min={1}
+                        max={20}
+                        value={predictionYears}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value);
+                          if (val >= 1 && val <= 20) {
+                            setPredictionYears(val);
+                          }
+                        }}
+                        className="w-full"
+                      />
+                    </div>
+
+                    {/* Run Prediction Button */}
+                    <div className="mt-4">
+                      <Button
+                        onClick={() => {
+                          // Validation checks
+                          if (!selectedLocation) {
+                            toast.error("Please select a location first");
+                            return;
+                          }
+
+                          if (predictionYears <= 0) {
+                            toast.error("Prediction years must be greater than 0");
+                            return;
+                          }
+
+                          // Show running toast
+                          toast.info("Running prediction...");
+
+                          // Run prediction
+                          runMonteCarloPrediction();
+
+                          // Show completion toast
+                          toast.success("Prediction complete! 🎉");
+                        }}
+                        className="w-full mt-4 bg-black text-white py-3 text-lg font-semibold rounded-lg"
+                      >
+                        Run Prediction
+                      </Button>
+                    </div>
+
+                    {/* Prediction Summary Card */}
+                    {predictionResults.length > 0 && (
+                      <div className="mt-6 p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
+                        <h3 className="text-lg font-semibold mb-4">Prediction Summary</h3>
+                        <div className="space-y-3">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-gray-600">Final Year Emission:</span>
+                            <span className="text-sm font-semibold text-gray-800">
+                              {predictionSummary.finalYearEmission.toFixed(2)} tons CO₂
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-gray-600">Average Annual Growth Rate:</span>
+                            <span className={`text-sm font-semibold ${predictionSummary.averageGrowthRate >= 0 ? 'text-red-600' : 'text-green-600'}`}>
+                              {predictionSummary.averageGrowthRate >= 0 ? '+' : ''}{predictionSummary.averageGrowthRate.toFixed(2)}%
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-gray-600">Highest Contributing Sector:</span>
+                            <span className="text-sm font-semibold text-gray-800">
+                              {predictionSummary.highestContributingSector}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-gray-600">Monte Carlo Confidence Score:</span>
+                            <span className={`text-sm font-semibold ${
+                              predictionSummary.confidenceScore >= 70 ? 'text-green-600' :
+                              predictionSummary.confidenceScore >= 50 ? 'text-yellow-600' :
+                              'text-red-600'
+                            }`}>
+                              {predictionSummary.confidenceScore.toFixed(1)}%
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Panel - Results */}
+              <div className="p-6 bg-white border rounded-lg shadow-sm">
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="text-lg font-semibold">Predicted CO₂ Emissions</h3>
+                  {predictionResults.length > 0 && (
+                    <Button
+                      onClick={() => setShowCharts(!showCharts)}
+                      variant="outline"
+                      size="sm"
+                      className="text-xs"
+                    >
+                      {showCharts ? 'Hide' : 'Show'}
+                    </Button>
+                  )}
+                </div>
+                {selectedLocation && (
+                  <p className="text-sm text-gray-600 mb-4">
+                    Location: <span className="font-medium text-gray-800">{selectedLocation.name}</span>
+                  </p>
+                )}
+                
+                {predictionResults.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <p>Run prediction to generate results</p>
+                  </div>
+                ) : (
+                  <div className="mt-4 space-y-6">
+                    {showCharts ? (
+                      /* Charts Section */
+                      <div className="space-y-6">
+                      {/* Line Chart - CO₂ Emissions Over Time */}
+                      <div className="p-4 bg-gray-50 rounded-lg">
+                        <h4 className="text-lg font-semibold mb-4">CO₂ Emissions Trend</h4>
+                        <ResponsiveContainer width="100%" height={300}>
+                          <LineChart data={predictionResults.map(r => ({ year: r.year.toString(), emission: r.emission }))}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="year" />
+                            <YAxis />
+                            <Tooltip 
+                              formatter={(value: number) => [`${value.toFixed(2)} tons CO₂`, 'Emission']}
+                            />
+                            <Legend />
+                            <Line 
+                              type="monotone" 
+                              dataKey="emission" 
+                              stroke="#3b82f6" 
+                              strokeWidth={2}
+                              name="Predicted CO₂ Emission"
+                              dot={{ r: 4 }}
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+
+                      {/* Pie Chart - Sector Contribution */}
+                      <div className="p-4 bg-gray-50 rounded-lg">
+                        <h4 className="text-lg font-semibold mb-4">Sector Contribution Breakdown</h4>
+                        <ResponsiveContainer width="100%" height={300}>
+                          <PieChart>
+                            <Pie
+                              data={calculateSectorContributions()}
+                              cx="50%"
+                              cy="50%"
+                              labelLine={false}
+                              label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
+                              outerRadius={100}
+                              fill="#8884d8"
+                              dataKey="value"
+                            >
+                              {calculateSectorContributions().map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.color} />
+                              ))}
+                            </Pie>
+                            <Tooltip 
+                              formatter={(value: number) => [`${value.toFixed(2)} tons CO₂`, 'Emission']}
+                            />
+                            <Legend />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                    ) : (
+                      /* Compact Table */
+                      <div>
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Year</TableHead>
+                              <TableHead className="text-right">Predicted CO₂ Emission (tons)</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {predictionResults.map((result, index) => (
+                              <TableRow key={index}>
+                                <TableCell className="font-medium">{result.year}</TableCell>
+                                <TableCell className="text-right text-blue-600 font-semibold">
+                                  {result.emission.toFixed(2)}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </TabsContent>

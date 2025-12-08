@@ -39,7 +39,6 @@ export function SimulationControls({
     <Card className="p-4">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg">Emission Factors</h3>
-        <Badge variant="outline">{currentScenario}</Badge>
       </div>
 
       <div className="space-y-4">
@@ -157,7 +156,7 @@ export function SimulationControls({
       </div>
 
       <div className="flex gap-2 mt-6">
-        <Button 
+        <Button
           onClick={onRunSimulation}
           disabled={isRunning}
           className="flex-1"
@@ -165,15 +164,15 @@ export function SimulationControls({
           <Play className="w-4 h-4 mr-2" />
           {isRunning ? 'Generating...' : 'Recommend'}
         </Button>
-        
-        <Button 
+
+        <Button
           onClick={onResetSimulation}
           variant="outline"
         >
           <RotateCcw className="w-4 h-4" />
         </Button>
-        
-        <Button 
+
+        <Button
           onClick={onSaveScenario}
           variant="outline"
         >

@@ -919,22 +919,22 @@ export default function App() {
               />
               {/* Map and Recommendation Panel side by side */}
               <div className="lg:col-span-2 flex flex-col lg:flex-row gap-4 items-start">
-                {/* Map - takes 65-70% of the space */}
-                <div className="w-full lg:w-[68%] flex-shrink-0">
+                {/* Map - takes full space */}
+                <div className="w-full">
                   <FixedGridMap
                     cellEmissions={cellEmissions}
                     onCellSelect={handleCellSelect}
                     selectedCellId={selectedCell?.id || null}
                   />
                 </div>
-                {/* Recommendation Panel - takes remaining space */}
-                <div className="w-full lg:w-[32%] flex-shrink-0">
+                {/* Recommendation Panel - Hidden */}
+                {/* <div className="w-full lg:w-[32%] flex-shrink-0">
                   <RecommendationPanel
                     recommendations={recommendations}
                     isVisible={showRecommendations}
                     onToggleVisibility={() => setShowRecommendations(!showRecommendations)}
                   />
-                </div>
+                </div> */}
               </div>
             </div>
           </TabsContent>

@@ -20,88 +20,92 @@ interface GridCell {
 interface FixedGridMapProps {
   cellEmissions?: number[][];
   onCellSelect?: (data: { row: number; col: number; cellId: string; bounds: [[number, number], [number, number]] }) => void;
+  selectedCellId?: string | null;
 }
 
 // Component to create the grid pane and render rectangles
-function FixedGridOverlay({ cellEmissions, onCellSelect }: FixedGridMapProps) {
-    const map = useMap();
-    const [paneReady, setPaneReady] = React.useState(false);
-  
-    // Create pane only once when map is ready
-    useEffect(() => {
-      if (!map) return;
-  
-      // Create pane only if it doesn't already exist
-      if (!map.getPane("gridPane")) {
-        map.createPane("gridPane");
-        map.getPane("gridPane")!.style.zIndex = "500";
+function FixedGridOverlay({ cellEmissions, onCellSelect, selectedCellId }: FixedGridMapProps) {
+  const map = useMap();
+  const [paneReady, setPaneReady] = React.useState(false);
+
+  // Create pane only once when map is ready
+  useEffect(() => {
+    if (!map) return;
+
+    // Create pane only if it doesn't already exist
+    if (!map.getPane("gridPane")) {
+      map.createPane("gridPane");
+      map.getPane("gridPane")!.style.zIndex = "500";
+    }
+
+    // Now rectangles are allowed to render
+    setPaneReady(true);
+  }, [map]);
+
+  // Stop rendering rectangles until pane exists
+  if (!paneReady) return null;
+
+  // Calculate grid cell bounds
+  const createGridCells = (): GridCell[] => {
+    const cells: GridCell[] = [];
+    const topLat = PUNE_BOUNDS.topLeft[0];
+    const bottomLat = PUNE_BOUNDS.bottomRight[0];
+    const leftLng = PUNE_BOUNDS.topLeft[1];
+    const rightLng = PUNE_BOUNDS.bottomRight[1];
+
+    const latStep = (topLat - bottomLat) / GRID_SIZE;
+    const lngStep = (rightLng - leftLng) / GRID_SIZE;
+
+    for (let row = 0; row < GRID_SIZE; row++) {
+      for (let col = 0; col < GRID_SIZE; col++) {
+        const cellTopLat = topLat - row * latStep;
+        const cellBottomLat = topLat - (row + 1) * latStep;
+        const cellLeftLng = leftLng + col * lngStep;
+        const cellRightLng = leftLng + (col + 1) * lngStep;
+
+        const bounds: [[number, number], [number, number]] = [
+          [cellBottomLat, cellLeftLng],
+          [cellTopLat, cellRightLng]
+        ];
+
+        cells.push({
+          row,
+          col,
+          cellId: `${col}-${row}`,
+          bounds
+        });
       }
-  
-      // Now rectangles are allowed to render
-      setPaneReady(true);
-    }, [map]);
-  
-    // Stop rendering rectangles until pane exists
-    if (!paneReady) return null;
-  
-    // Calculate grid cell bounds
-    const createGridCells = (): GridCell[] => {
-      const cells: GridCell[] = [];
-      const topLat = PUNE_BOUNDS.topLeft[0];
-      const bottomLat = PUNE_BOUNDS.bottomRight[0];
-      const leftLng = PUNE_BOUNDS.topLeft[1];
-      const rightLng = PUNE_BOUNDS.bottomRight[1];
-  
-      const latStep = (topLat - bottomLat) / GRID_SIZE;
-      const lngStep = (rightLng - leftLng) / GRID_SIZE;
-  
-      for (let row = 0; row < GRID_SIZE; row++) {
-        for (let col = 0; col < GRID_SIZE; col++) {
-          const cellTopLat = topLat - row * latStep;
-          const cellBottomLat = topLat - (row + 1) * latStep;
-          const cellLeftLng = leftLng + col * lngStep;
-          const cellRightLng = leftLng + (col + 1) * lngStep;
-  
-          const bounds: [[number, number], [number, number]] = [
-            [cellBottomLat, cellLeftLng],
-            [cellTopLat, cellRightLng]
-          ];
-  
-          cells.push({
-            row,
-            col,
-            cellId: `${row}-${col}`,
-            bounds
-          });
-        }
-      }
-  
-      return cells;
-    };
-  
-    const getCellEmission = (row: number, col: number): number =>
-      cellEmissions?.[row]?.[col] ?? 0;
-  
-    const getEmissionColor = (emission: number): string => {
-      if (emission >= 250) return "#dc2626"; 
-      if (emission >= 150) return "#ea580c"; 
-      if (emission >= 50) return "#eab308";  
-      return "#22c55e"; 
-    };
-  
-    const gridCells = createGridCells();
-  
-    return (
-      <>
-        {gridCells.map(cell => (
+    }
+
+    return cells;
+  };
+
+  const getCellEmission = (row: number, col: number): number =>
+    cellEmissions?.[row]?.[col] ?? 0;
+
+  const getEmissionColor = (emission: number): string => {
+    if (emission >= 250) return "#dc2626";
+    if (emission >= 150) return "#ea580c";
+    if (emission >= 50) return "#eab308";
+    return "#22c55e";
+  };
+
+  const gridCells = createGridCells();
+
+  return (
+    <>
+      {gridCells.map(cell => {
+        const isSelected = cell.cellId === selectedCellId;
+
+        return (
           <Rectangle
             key={cell.cellId}
             bounds={cell.bounds}
             pane="gridPane"
             pathOptions={{
               fillOpacity: 0.35,
-              color: "#ffffff",
-              weight: 0.7,
+              color: isSelected ? "#2563eb" : "#ffffff", // Blue if selected, white otherwise
+              weight: isSelected ? 3 : 0.7, // Thicker border if selected
               fillColor: getEmissionColor(getCellEmission(cell.row, cell.col)),
             }}
             eventHandlers={{
@@ -115,13 +119,14 @@ function FixedGridOverlay({ cellEmissions, onCellSelect }: FixedGridMapProps) {
               },
             }}
           />
-        ))}
-      </>
-    );
-  }
-  
+        );
+      })}
+    </>
+  );
+}
+
 // Main FixedGridMap component
-export function FixedGridMap({ cellEmissions, onCellSelect }: FixedGridMapProps) {
+export function FixedGridMap({ cellEmissions, onCellSelect, selectedCellId }: FixedGridMapProps) {
   // Calculate center of the bounding box
   const center: [number, number] = [
     (PUNE_BOUNDS.topLeft[0] + PUNE_BOUNDS.bottomRight[0]) / 2,
@@ -164,6 +169,7 @@ export function FixedGridMap({ cellEmissions, onCellSelect }: FixedGridMapProps)
           <FixedGridOverlay
             cellEmissions={cellEmissions}
             onCellSelect={onCellSelect}
+            selectedCellId={selectedCellId}
           />
         </MapContainer>
       </div>

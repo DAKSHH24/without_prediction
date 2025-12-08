@@ -120,7 +120,7 @@ export default function App() {
       const y = Math.floor(i / 12);
       const types: GridCell['type'][] = ['residential', 'industrial', 'commercial', 'transport'];
       const type = types[Math.floor(Math.random() * types.length)];
-      
+
       let baseEmission = 0;
       switch (type) {
         case 'industrial': baseEmission = Math.random() * 60 + 30; break;
@@ -194,7 +194,7 @@ export default function App() {
     }
   ];
 
-  const placedInterventions = gridData.flatMap(cell => 
+  const placedInterventions = gridData.flatMap(cell =>
     cell.interventions.map(intervention => ({
       id: `${cell.id}-${intervention.id}`,
       cellId: cell.id,
@@ -222,7 +222,7 @@ export default function App() {
       const currentEmission = cell.emission - cell.interventions.reduce((sum, i) => sum + cell.emission * (i.efficiency / 100), 0);
       return currentEmission > 30;
     }).length;
-    const avgEfficiency = interventionCount > 0 ? 
+    const avgEfficiency = interventionCount > 0 ?
       placedInterventions.reduce((sum, p) => sum + p.efficiency, 0) / interventionCount : 0;
 
     return {
@@ -309,36 +309,36 @@ export default function App() {
 
       // Apply factor modifiers
       let emission = baseEmission;
-      
+
       // Green areas reduce emissions
       emission *= (1 - params.green / 200);
-      
+
       // Building density increases emissions
       emission *= (0.5 + params.building / 100);
-      
+
       // Water bodies reduce emissions slightly
       emission *= (1 - params.water / 300);
-      
+
       // Vehicles increase emissions
       emission *= (0.4 + params.vehicles / 100);
-      
+
       // Industrial activity affects industrial zones more
       if (cell.type === 'industrial') {
         emission *= (0.5 + params.industrial / 80);
       } else {
         emission *= (0.7 + params.industrial / 200);
       }
-      
+
       // Energy consumption increases emissions
       emission *= (0.5 + params.energy / 100);
-      
+
       // Congestion increases transport emissions
       if (cell.type === 'transport') {
         emission *= (0.6 + params.congestion / 100);
       } else {
         emission *= (0.8 + params.congestion / 200);
       }
-      
+
       // Public transport reduces emissions
       emission *= (1.2 - params.publicTransport / 150);
 
@@ -381,8 +381,8 @@ export default function App() {
       icon: interventionType.icon
     };
 
-    setGridData(prev => prev.map(cell => 
-      cell.id === cellId 
+    setGridData(prev => prev.map(cell =>
+      cell.id === cellId
         ? { ...cell, interventions: [...cell.interventions, newIntervention] }
         : cell
     ));
@@ -394,12 +394,12 @@ export default function App() {
     // Parse the interventionId: format is "cellId-interventionTypeId"
     // cellId is "x-y" format, so we need to extract it properly
     const parts = interventionId.split('-');
-    
+
     // Cell ID is always "x-y" (first two parts), intervention type ID is the rest
     // Handle cases where intervention type ID might also contain dashes
     let cellId: string;
     let interventionTypeId: string;
-    
+
     // Try to find a valid cell ID pattern (x-y where x and y are digits)
     // Since cell.id is always "x-y", we can safely assume first two parts are cellId
     if (parts.length >= 3) {
@@ -411,34 +411,34 @@ export default function App() {
       cellId = parts[0];
       interventionTypeId = parts.slice(1).join('-');
     }
-    
-    setGridData(prev => prev.map(cell => 
-      cell.id === cellId 
-        ? { 
-            ...cell, 
-            interventions: cell.interventions.filter(intervention => intervention.id !== interventionTypeId)
-          }
+
+    setGridData(prev => prev.map(cell =>
+      cell.id === cellId
+        ? {
+          ...cell,
+          interventions: cell.interventions.filter(intervention => intervention.id !== interventionTypeId)
+        }
         : cell
     ));
-  
+
     toast.success('Intervention removed');
   };
-  
+
   // Generate recommendations: 1 best + 3 alternatives
   const generateRecommendations = (): Recommendation[] => {
     const recs: Recommendation[] = [];
-  
+
     // Get all cells with emissions, sorted by emission (highest first)
     const highEmissionCells = gridData
       .filter(cell => cell.emission > 0)
       .sort((a, b) => b.emission - a.emission);
-  
+
     // Generate recommendations for top cells
     highEmissionCells.forEach((cell) => {
       let intervention = "";
       let explanation = "";
       let reductionPercent = 0;
-  
+
       if (cell.type === "industrial") {
         intervention = "Industrial CO₂ Capture Unit";
         explanation = "This area has high industrial emissions. A high-capacity capture unit will significantly reduce CO₂ output from manufacturing processes.";
@@ -456,7 +456,7 @@ export default function App() {
         explanation = "Residential areas benefit from natural CO₂ absorption. A vertical garden wall provides both aesthetic value and emission reduction.";
         reductionPercent = 15;
       }
-  
+
       if (intervention) {
         recs.push({
           intervention,
@@ -468,11 +468,11 @@ export default function App() {
         });
       }
     });
-  
+
     // Return top 4 (1 best + 3 alternatives)
     return recs.slice(0, 4);
   };
-  
+
   // Location search function
   const searchLocation = async (query: string) => {
     if (!query.trim()) {
@@ -561,7 +561,7 @@ export default function App() {
 
       // Calculate mean of 500 runs
       const meanEmission = simulationResults.reduce((sum, val) => sum + val, 0) / simulationResults.length;
-      
+
       predictedData.push({
         year,
         emission: meanEmission
@@ -578,11 +578,11 @@ export default function App() {
 
     // Get the latest year's emission
     const latestEmission = predictionResults[predictionResults.length - 1].emission;
-    
+
     // Calculate sector contributions based on growth factors
     // Normalize growth factors to get proportions
     const totalGrowth = industrialGrowth + residentialGrowth + commercialGrowth + vehicleGrowth + (populationGrowth * 0.5);
-    
+
     if (totalGrowth === 0) {
       // Equal distribution if no growth
       return [
@@ -607,7 +607,7 @@ export default function App() {
 
     // Normalize to ensure they sum to 1
     const sum = industrialFinal + residentialFinal + commercialFinal + transportFinal;
-    
+
     return [
       { name: 'Industrial', value: (latestEmission * industrialFinal / sum), color: '#ef4444' },
       { name: 'Residential', value: (latestEmission * residentialFinal / sum), color: '#22c55e' },
@@ -643,7 +643,7 @@ export default function App() {
       { name: 'Commercial', growth: commercialGrowth },
       { name: 'Transport', growth: vehicleGrowth },
     ];
-    const highestSector = sectors.reduce((max, sector) => 
+    const highestSector = sectors.reduce((max, sector) =>
       sector.growth > max.growth ? sector : max
     );
 
@@ -669,7 +669,7 @@ export default function App() {
   const predictionSummary = calculatePredictionSummary();
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-green-50">
       <div className="container mx-auto p-4">
         {/* Header */}
         <div className="mb-6">
@@ -684,28 +684,28 @@ export default function App() {
         </div>
 
         {/* Main Content */}
-<Tabs defaultValue="dashboard" className="w-full">
+        <Tabs defaultValue="dashboard" className="w-full">
           <TabsList className="w-full flex flex-row gap-2">
             <TabsTrigger value="dashboard" className="flex-1">
-      <BarChart3 className="w-4 h-4 mr-2" />
-      Dashboard
-    </TabsTrigger>
+              <BarChart3 className="w-4 h-4 mr-2" />
+              Dashboard
+            </TabsTrigger>
 
             <TabsTrigger value="map" className="flex-1">
-      <Map className="w-4 h-4 mr-2" />
-      Interactive Map
-    </TabsTrigger>
+              <Map className="w-4 h-4 mr-2" />
+              Interactive Map
+            </TabsTrigger>
 
             <TabsTrigger value="simulation" className="flex-1">
-      <Settings className="w-4 h-4 mr-2" />
-      Simulation
-    </TabsTrigger>
+              <Settings className="w-4 h-4 mr-2" />
+              Simulation
+            </TabsTrigger>
 
             <TabsTrigger value="prediction" className="flex-1">
               <TrendingUp className="w-4 h-4 mr-2" />
               Prediction
-    </TabsTrigger>
-  </TabsList>
+            </TabsTrigger>
+          </TabsList>
 
           <TabsContent value="dashboard" className="space-y-6">
             <KPIMetrics
@@ -717,57 +717,98 @@ export default function App() {
           </TabsContent>
 
           <TabsContent value="map" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
               {/* Map - takes full left width */}
-              <div className="lg:col-span-2 space-y-6">
-                <FixedGridMap
-                  cellEmissions={cellEmissions}
-                  onCellSelect={handleCellSelect}
-                />
-                
-                {/* Intervention Details Card - appears below map when intervention is selected */}
-                {selectedIntervention && (
-                  <Card className="p-4 animate-in slide-in-from-top duration-300">
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="text-2xl">{selectedIntervention.icon}</span>
-                      <h3 className="text-lg font-semibold">Intervention Details</h3>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Map Layout with Side Panel */}
+              {/* Details (Left), Map (Center), Interventions (Right) */}
+
+              {/* Left Side: Cell Details Panel */}
+              <div className="lg:col-span-1 space-y-4">
+                <Card className="p-4 h-full">
+                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <Search className="w-5 h-5 text-gray-500" />
+                    Cell Details
+                  </h3>
+
+                  {selectedCell ? (
+                    <div className="space-y-4 animate-in fade-in duration-300">
                       <div>
-                        <p className="text-sm text-gray-600 mb-1">Name</p>
-                        <p className="text-sm font-medium">{selectedIntervention.name}</p>
+                        <div className="text-sm text-gray-500 mb-1">Cell ID</div>
+                        <div className="text-2xl font-mono font-medium">{selectedCell.id}</div>
                       </div>
+
                       <div>
-                        <p className="text-sm text-gray-600 mb-1">Efficiency</p>
-                        <p className="text-sm font-medium text-green-600">
-                          -{selectedIntervention.efficiency}% CO₂ reduction
-                        </p>
+                        <div className="text-sm text-gray-500 mb-1">Zone Type</div>
+                        <Badge variant="outline" className="text-base capitalize">
+                          {selectedCell.type}
+                        </Badge>
                       </div>
+
                       <div>
-                        <p className="text-sm text-gray-600 mb-1">Cost</p>
-                        <p className="text-sm font-medium">${selectedIntervention.cost.toLocaleString()} per unit</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600 mb-1">Suitable For</p>
-                        <div className="flex flex-wrap gap-1">
-                          {selectedIntervention.suitableFor.map((type) => (
-                            <Badge key={type} variant="outline" className="text-xs">
-                              {type}
-                            </Badge>
-                          ))}
+                        <div className="text-sm text-gray-500 mb-1">Current Emission</div>
+                        <div className={`text-xl font-bold ${selectedCell.emission > 150 ? 'text-red-600' :
+                          selectedCell.emission > 50 ? 'text-orange-500' : 'text-green-600'
+                          }`}>
+                          {selectedCell.emission.toFixed(1)} <span className="text-sm font-normal text-gray-600">tons/year</span>
                         </div>
                       </div>
-                      <div className="md:col-span-2">
-                        <p className="text-sm text-gray-600 mb-1">Description</p>
-                        <p className="text-sm text-gray-700">{selectedIntervention.description}</p>
+
+                      <div>
+                        <div className="text-sm text-gray-500 mb-1">Active Interventions</div>
+                        {selectedCell.interventions.length > 0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {selectedCell.interventions.map((i, idx) => (
+                              <div key={idx} className="flex items-center gap-1 bg-blue-50 text-blue-700 px-2 py-1 rounded text-sm">
+                                <span>{i.icon}</span>
+                                <span>{i.name}</span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-sm text-gray-400 italic">No interventions placed yet</div>
+                        )}
                       </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-40 text-gray-400 text-center">
+                      <Map className="w-12 h-12 mb-2 opacity-20" />
+                      <p>Select a grid cell on the map to view details</p>
+                    </div>
+                  )}
+                </Card>
+
+                {/* Intervention Details Linked to Selection */}
+                {selectedIntervention && (
+                  <Card className="p-4 animate-in slide-in-from-top duration-300 border-blue-200 bg-blue-50/50">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-2xl">{selectedIntervention.icon}</span>
+                      <h3 className="text-lg font-semibold">New Intervention</h3>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Type:</span>
+                        <span className="font-medium">{selectedIntervention.name}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Efficiency:</span>
+                        <span className="text-green-600 font-medium">-{selectedIntervention.efficiency}%</span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-2">{selectedIntervention.description}</p>
                     </div>
                   </Card>
                 )}
               </div>
-              
+
+              {/* Center Column: Map (Span 2) */}
+              <div className="lg:col-span-2 min-h-[500px]">
+                <FixedGridMap
+                  cellEmissions={cellEmissions}
+                  onCellSelect={handleCellSelect}
+                  selectedCellId={selectedCell?.id || null}
+                />
+              </div>
               {/* Intervention List - right side only */}
-              <div>
+              <div className="lg:col-span-1">
                 <InterventionPanel
                   availableInterventions={availableInterventions}
                   placedInterventions={placedInterventions}
@@ -817,6 +858,7 @@ export default function App() {
                   <FixedGridMap
                     cellEmissions={cellEmissions}
                     onCellSelect={handleCellSelect}
+                    selectedCellId={selectedCell?.id || null}
                   />
                 </div>
                 {/* Recommendation Panel - takes remaining space */}
@@ -835,9 +877,9 @@ export default function App() {
               {/* Left Panel - Controls */}
               <div className="flex flex-col h-[calc(100vh-250px)]">
                 <div className="flex-1 overflow-y-auto">
-            <div className="p-6 bg-white border rounded-lg shadow-sm">
+                  <div className="p-6 bg-white border rounded-lg shadow-sm">
                     <h2 className="text-xl font-semibold mb-4">CO₂ Prediction Model</h2>
-                    
+
                     {/* Location Search */}
                     <div className="mb-6">
                       <Label htmlFor="location-search" className="mb-2 block">
@@ -1021,11 +1063,10 @@ export default function App() {
                           </div>
                           <div className="flex justify-between items-center">
                             <span className="text-sm text-gray-600">Monte Carlo Confidence Score:</span>
-                            <span className={`text-sm font-semibold ${
-                              predictionSummary.confidenceScore >= 70 ? 'text-green-600' :
+                            <span className={`text-sm font-semibold ${predictionSummary.confidenceScore >= 70 ? 'text-green-600' :
                               predictionSummary.confidenceScore >= 50 ? 'text-yellow-600' :
-                              'text-red-600'
-                            }`}>
+                                'text-red-600'
+                              }`}>
                               {predictionSummary.confidenceScore.toFixed(1)}%
                             </span>
                           </div>
@@ -1056,7 +1097,7 @@ export default function App() {
                     Location: <span className="font-medium text-gray-800">{selectedLocation.name}</span>
                   </p>
                 )}
-                
+
                 {predictionResults.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
                     <p>Run prediction to generate results</p>
@@ -1066,57 +1107,57 @@ export default function App() {
                     {showCharts ? (
                       /* Charts Section */
                       <div className="space-y-6">
-                      {/* Line Chart - CO₂ Emissions Over Time */}
-                      <div className="p-4 bg-gray-50 rounded-lg">
-                        <h4 className="text-lg font-semibold mb-4">CO₂ Emissions Trend</h4>
-                        <ResponsiveContainer width="100%" height={300}>
-                          <LineChart data={predictionResults.map(r => ({ year: r.year.toString(), emission: r.emission }))}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="year" />
-                            <YAxis />
-                            <Tooltip 
-                              formatter={(value: number) => [`${value.toFixed(2)} tons CO₂`, 'Emission']}
-                            />
-                            <Legend />
-                            <Line 
-                              type="monotone" 
-                              dataKey="emission" 
-                              stroke="#3b82f6" 
-                              strokeWidth={2}
-                              name="Predicted CO₂ Emission"
-                              dot={{ r: 4 }}
-                            />
-                          </LineChart>
-                        </ResponsiveContainer>
-                      </div>
+                        {/* Line Chart - CO₂ Emissions Over Time */}
+                        <div className="p-4 bg-gray-50 rounded-lg">
+                          <h4 className="text-lg font-semibold mb-4">CO₂ Emissions Trend</h4>
+                          <ResponsiveContainer width="100%" height={300}>
+                            <LineChart data={predictionResults.map(r => ({ year: r.year.toString(), emission: r.emission }))}>
+                              <CartesianGrid strokeDasharray="3 3" />
+                              <XAxis dataKey="year" />
+                              <YAxis />
+                              <Tooltip
+                                formatter={(value: number) => [`${value.toFixed(2)} tons CO₂`, 'Emission']}
+                              />
+                              <Legend />
+                              <Line
+                                type="monotone"
+                                dataKey="emission"
+                                stroke="#3b82f6"
+                                strokeWidth={2}
+                                name="Predicted CO₂ Emission"
+                                dot={{ r: 4 }}
+                              />
+                            </LineChart>
+                          </ResponsiveContainer>
+                        </div>
 
-                      {/* Pie Chart - Sector Contribution */}
-                      <div className="p-4 bg-gray-50 rounded-lg">
-                        <h4 className="text-lg font-semibold mb-4">Sector Contribution Breakdown</h4>
-                        <ResponsiveContainer width="100%" height={300}>
-                          <PieChart>
-                            <Pie
-                              data={calculateSectorContributions()}
-                              cx="50%"
-                              cy="50%"
-                              labelLine={false}
-                              label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
-                              outerRadius={100}
-                              fill="#8884d8"
-                              dataKey="value"
-                            >
-                              {calculateSectorContributions().map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={entry.color} />
-                              ))}
-                            </Pie>
-                            <Tooltip 
-                              formatter={(value: number) => [`${value.toFixed(2)} tons CO₂`, 'Emission']}
-                            />
-                            <Legend />
-                          </PieChart>
-                        </ResponsiveContainer>
+                        {/* Pie Chart - Sector Contribution */}
+                        <div className="p-4 bg-gray-50 rounded-lg">
+                          <h4 className="text-lg font-semibold mb-4">Sector Contribution Breakdown</h4>
+                          <ResponsiveContainer width="100%" height={300}>
+                            <PieChart>
+                              <Pie
+                                data={calculateSectorContributions()}
+                                cx="50%"
+                                cy="50%"
+                                labelLine={false}
+                                label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
+                                outerRadius={100}
+                                fill="#8884d8"
+                                dataKey="value"
+                              >
+                                {calculateSectorContributions().map((entry, index) => (
+                                  <Cell key={`cell-${index}`} fill={entry.color} />
+                                ))}
+                              </Pie>
+                              <Tooltip
+                                formatter={(value: number) => [`${value.toFixed(2)} tons CO₂`, 'Emission']}
+                              />
+                              <Legend />
+                            </PieChart>
+                          </ResponsiveContainer>
+                        </div>
                       </div>
-                    </div>
                     ) : (
                       /* Compact Table */
                       <div>

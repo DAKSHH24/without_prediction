@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import LoginPage from './components/LoginPage';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
 import { Button } from './components/ui/button';
 import { Badge } from './components/ui/badge';
@@ -83,6 +84,7 @@ export default function App() {
   // State
   const [selectedCell, setSelectedCell] = useState<GridCell | null>(null);
   const [selectedIntervention, setSelectedIntervention] = useState<InterventionType | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isSimulationRunning, setIsSimulationRunning] = useState(false);
   const [currentScenario, setCurrentScenario] = useState('Default Scenario');
   const [showInterventions, setShowInterventions] = useState(true);
@@ -721,6 +723,10 @@ export default function App() {
   };
 
   const predictionSummary = calculatePredictionSummary();
+
+  if (!isLoggedIn) {
+    return <LoginPage onLogin={() => setIsLoggedIn(true)} />;
+  }
 
   return (
     <div className="min-h-screen bg-green-50">

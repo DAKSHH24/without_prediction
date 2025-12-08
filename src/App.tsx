@@ -37,6 +37,7 @@ interface GridCell {
   emission: number;
   type: 'residential' | 'industrial' | 'commercial' | 'transport';
   interventions: Intervention[];
+  baseEmission: number;
 }
 
 interface Intervention {
@@ -135,6 +136,7 @@ export default function App() {
         y,
         emission: baseEmission,
         type,
+        baseEmission,
         interventions: []
       });
     }
@@ -248,11 +250,11 @@ export default function App() {
 
   // Mock historical and projection data
   const historicalData = [
-    { year: 2020, emissions: baselineKPIs.totalEmissions * 0.95, interventions: 0 },
-    { year: 2021, emissions: baselineKPIs.totalEmissions * 0.98, interventions: 2 },
-    { year: 2022, emissions: baselineKPIs.totalEmissions * 1.02, interventions: 5 },
-    { year: 2023, emissions: baselineKPIs.totalEmissions, interventions: 8 },
-    { year: 2024, emissions: currentKPIs.totalEmissions, interventions: placedInterventions.length },
+    { year: 2021, emissions: baselineKPIs.totalEmissions * 0.95, interventions: 0 },
+    { year: 2022, emissions: baselineKPIs.totalEmissions * 0.98, interventions: 2 },
+    { year: 2023, emissions: baselineKPIs.totalEmissions * 1.02, interventions: 5 },
+    { year: 2024, emissions: baselineKPIs.totalEmissions, interventions: 8 },
+    { year: 2025, emissions: currentKPIs.totalEmissions, interventions: placedInterventions.length },
   ];
 
   const emissionsByType = [
@@ -381,11 +383,42 @@ export default function App() {
       icon: interventionType.icon
     };
 
-    setGridData(prev => prev.map(cell =>
-      cell.id === cellId
-        ? { ...cell, interventions: [...cell.interventions, newIntervention] }
-        : cell
-    ));
+    // Calculate new total efficiency including the new one
+    const currentInterventions = cellId === selectedCell?.id ? selectedCell.interventions : [];
+    // Note: We need to look up the cell from the previous state to get its current interventions correctly if it wasn't selected,
+    // but here we are inside setGridData updater or using the found cell. 
+    // Actually, let's look at the mapping logic.
+
+    setGridData(prev => prev.map(cell => {
+      if (cell.id === cellId) {
+        const updatedInterventions = [...cell.interventions, newIntervention];
+        const totalEfficiency = updatedInterventions.reduce((sum, inv) => sum + inv.efficiency, 0);
+        // Cap efficiency at 90% to be realistic? Or allow 100%? Let's say max reduction 95%.
+        const effectiveEfficiency = Math.min(totalEfficiency, 95);
+        const newEmission = cell.baseEmission * (1 - effectiveEfficiency / 100);
+
+        return {
+          ...cell,
+          interventions: updatedInterventions,
+          emission: newEmission
+        };
+      }
+      return cell;
+    }));
+
+    // Update selectedCell if it matches
+    if (selectedCell && selectedCell.id === cellId) {
+      const updatedInterventions = [...selectedCell.interventions, newIntervention];
+      const totalEfficiency = updatedInterventions.reduce((sum, inv) => sum + inv.efficiency, 0);
+      const effectiveEfficiency = Math.min(totalEfficiency, 95);
+      const newEmission = selectedCell.baseEmission * (1 - effectiveEfficiency / 100);
+
+      setSelectedCell({
+        ...selectedCell,
+        interventions: updatedInterventions,
+        emission: newEmission
+      });
+    }
 
     toast.success(`${interventionType.name} placed successfully!`);
   };
@@ -412,14 +445,35 @@ export default function App() {
       interventionTypeId = parts.slice(1).join('-');
     }
 
-    setGridData(prev => prev.map(cell =>
-      cell.id === cellId
-        ? {
+    setGridData(prev => prev.map(cell => {
+      if (cell.id === cellId) {
+        const updatedInterventions = cell.interventions.filter(intervention => intervention.id !== interventionTypeId);
+        const totalEfficiency = updatedInterventions.reduce((sum, inv) => sum + inv.efficiency, 0);
+        const effectiveEfficiency = Math.min(totalEfficiency, 95);
+        const newEmission = cell.baseEmission * (1 - effectiveEfficiency / 100);
+
+        return {
           ...cell,
-          interventions: cell.interventions.filter(intervention => intervention.id !== interventionTypeId)
-        }
-        : cell
-    ));
+          interventions: updatedInterventions,
+          emission: newEmission
+        };
+      }
+      return cell;
+    }));
+
+    // Update selectedCell if it matches
+    if (selectedCell && selectedCell.id === cellId) {
+      const updatedInterventions = selectedCell.interventions.filter(intervention => intervention.id !== interventionTypeId);
+      const totalEfficiency = updatedInterventions.reduce((sum, inv) => sum + inv.efficiency, 0);
+      const effectiveEfficiency = Math.min(totalEfficiency, 95);
+      const newEmission = selectedCell.baseEmission * (1 - effectiveEfficiency / 100);
+
+      setSelectedCell({
+        ...selectedCell,
+        interventions: updatedInterventions,
+        emission: newEmission
+      });
+    }
 
     toast.success('Intervention removed');
   };
@@ -701,10 +755,10 @@ export default function App() {
               Simulation
             </TabsTrigger>
 
-            <TabsTrigger value="prediction" className="flex-1">
+            {/* <TabsTrigger value="prediction" className="flex-1">
               <TrendingUp className="w-4 h-4 mr-2" />
               Prediction
-            </TabsTrigger>
+            </TabsTrigger> */}
           </TabsList>
 
           <TabsContent value="dashboard" className="space-y-6">
@@ -757,12 +811,18 @@ export default function App() {
                         <div className="text-sm text-gray-500 mb-1">Active Interventions</div>
                         {selectedCell.interventions.length > 0 ? (
                           <div className="flex flex-wrap gap-2">
-                            {selectedCell.interventions.map((i, idx) => (
-                              <div key={idx} className="flex items-center gap-1 bg-blue-50 text-blue-700 px-2 py-1 rounded text-sm">
-                                <span>{i.icon}</span>
-                                <span>{i.name}</span>
-                              </div>
-                            ))}
+                            {selectedCell.interventions.map((i, idx) => {
+                              const reductionAmount = selectedCell.baseEmission * (i.efficiency / 100);
+                              return (
+                                <div key={idx} className="flex items-center gap-1 bg-blue-50 text-blue-700 px-2 py-1 rounded text-sm">
+                                  <span>{i.icon}</span>
+                                  <span>{i.name}</span>
+                                  <span className="font-semibold ml-1">
+                                    (-{reductionAmount.toFixed(1)} tons)
+                                  </span>
+                                </div>
+                              );
+                            })}
                           </div>
                         ) : (
                           <div className="text-sm text-gray-400 italic">No interventions placed yet</div>

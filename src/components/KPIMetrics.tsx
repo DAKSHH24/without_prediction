@@ -16,7 +16,7 @@ import {
   Cell,
   Legend,
 } from 'recharts';
-import { TrendingDown, TrendingUp, Activity, Target } from 'lucide-react';
+import { TrendingDown, TrendingUp, Activity, Target, IndianRupee } from 'lucide-react';
 
 interface KPIData {
   totalEmissions: number;
@@ -52,9 +52,9 @@ export function KPIMetrics({
 }: KPIMetricsProps) {
   const getChangeIcon = (current: number, baseline: number) => {
     return current < baseline ? (
-      <TrendingDown className="w-4 h-4 text-green-500" />
+      <TrendingDown className="w-4 h-4 text-black" />
     ) : (
-      <TrendingUp className="w-4 h-4 text-red-500" />
+      <TrendingUp className="w-4 h-4 text-black" />
     );
   };
 
@@ -94,52 +94,39 @@ export function KPIMetrics({
           </div>
           <div className="text-2xl">{currentKPI.totalEmissions.toFixed(1)}</div>
           <div className="text-xs text-gray-500">tons CO₂/year</div>
-          <div
-            className={`text-xs mt-1 ${getChangeColor(
-              currentKPI.totalEmissions,
-              baselineKPI.totalEmissions
-            )}`}
-          >
-            {getPercentChange(currentKPI.totalEmissions, baselineKPI.totalEmissions)}% vs baseline
-          </div>
+
         </Card>
 
         <Card className="p-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-gray-600">Reduction</span>
-            <Target className="w-4 h-4 text-blue-500" />
+            <Target className="w-4 h-4 text-black" />
           </div>
           <div className="text-2xl text-green-600">
             {currentKPI.emissionReduction.toFixed(1)}%
           </div>
           <div className="text-xs text-gray-500">from interventions</div>
-          <Badge variant="secondary" className="text-xs mt-1">
-            {currentKPI.projectedSavings.toFixed(0)} tons saved
-          </Badge>
+
         </Card>
 
         <Card className="p-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-gray-600">Efficiency</span>
-            <Activity className="w-4 h-4 text-purple-500" />
+            <Activity className="w-4 h-4 text-black" />
           </div>
           <div className="text-2xl">{currentKPI.interventionEfficiency.toFixed(1)}%</div>
           <div className="text-xs text-gray-500">intervention effectiveness</div>
-          <div className="text-xs mt-1 text-gray-600">
-            {currentKPI.hotspotCount} hotspots remaining
-          </div>
+
         </Card>
 
         <Card className="p-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-gray-600">Cost/Benefit</span>
-            <span className="text-lg">💰</span>
+            <IndianRupee className="w-4 h-4 text-black" />
           </div>
-          <div className="text-2xl">${currentKPI.costEffectiveness.toFixed(0)}</div>
+          <div className="text-2xl">₹{currentKPI.costEffectiveness.toFixed(0)}</div>
           <div className="text-xs text-gray-500">per ton CO₂ reduced</div>
-          <div className="text-xs mt-1 text-green-600">
-            ROI: {((1 / currentKPI.costEffectiveness) * 100).toFixed(0)}%
-          </div>
+
         </Card>
       </div>
 
@@ -150,26 +137,26 @@ export function KPIMetrics({
           <ResponsiveContainer width="100%" height={200}>
             <LineChart data={historicalData}>
               <CartesianGrid strokeDasharray="3 3" />
-             <XAxis
-  dataKey="year"
-  label={{
-    value: "Year →",
-    position: "insideBottom",
-    offset: -5,
-  }}
-/>
+              <XAxis
+                dataKey="year"
+                label={{
+                  value: "Year →",
+                  position: "insideBottom",
+                  offset: -5,
+                }}
+              />
 
-<YAxis
-  label={{
-    value: "CO₂ Emissions (tons/year) ↑",
-    angle: -90,
-    position: "insideLeft",
-    offset: -40,   // FIXED ALIGNMENT
-  }}
-/>
+              <YAxis
+                label={{
+                  value: "CO₂ Emissions (tons/year) ↑",
+                  angle: -90,
+                  position: "insideLeft",
+                  offset: -40,   // FIXED ALIGNMENT
+                }}
+              />
 
 
-              <Tooltip />
+
               <Line
                 type="monotone"
                 dataKey="emissions"
@@ -194,24 +181,24 @@ export function KPIMetrics({
             <BarChart data={emissionsByType}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis
-  dataKey="type"
-  label={{
-    value: "Emission Source →",
-    position: "insideBottom",
-    offset: -5,
-  }}
-/>
-<YAxis
-  label={{
-    value: "Emissions (tons/year) ↑",
-    angle: -90,
-    position: "insideLeft",
-    offset: -40,
-  }}
-/>
+                dataKey="type"
+                label={{
+                  value: "Emission Source →",
+                  position: "insideBottom",
+                  offset: -5,
+                }}
+              />
+              <YAxis
+                label={{
+                  value: "Emissions (tons/year) ↑",
+                  angle: -90,
+                  position: "insideLeft",
+                  offset: -40,
+                }}
+              />
 
 
-              <Tooltip />
+
               <Bar dataKey="baseline" fill="#94a3b8" name="Baseline" />
               <Bar dataKey="current" fill="#3b82f6" name="Current" />
             </BarChart>
@@ -241,7 +228,7 @@ export function KPIMetrics({
                   />
                 ))}
               </Pie>
-              <Tooltip />
+
               <Legend />
             </PieChart>
           </ResponsiveContainer>
@@ -252,26 +239,26 @@ export function KPIMetrics({
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={savingsOverTimeData}>
               <CartesianGrid strokeDasharray="3 3" />
-             <XAxis
-  dataKey="year"
-  label={{
-    value: "Year →",
-    position: "insideBottom",
-    offset: -5,
-  }}
-/>
+              <XAxis
+                dataKey="year"
+                label={{
+                  value: "Year →",
+                  position: "insideBottom",
+                  offset: -5,
+                }}
+              />
 
-<YAxis
-  label={{
-    value: "CO₂ Saved (tons/year) ↑",
-    angle: -90,
-    position: "insideLeft",
-    offset: -40,   // FIXED ALIGNMENT
-  }}
-/>
+              <YAxis
+                label={{
+                  value: "CO₂ Saved (tons/year) ↑",
+                  angle: -90,
+                  position: "insideLeft",
+                  offset: -40,   // FIXED ALIGNMENT
+                }}
+              />
 
 
-              <Tooltip />
+
               <Line
                 type="monotone"
                 dataKey="saved"

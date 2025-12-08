@@ -156,14 +156,22 @@ export function SimulationControls({
       </div>
 
       <div className="flex gap-2 mt-6">
+<<<<<<< HEAD
         <Button
+=======
+        {/* <Button
+>>>>>>> 5849f9d15c2908b9db4a595283c80536ac190aa1
           onClick={onRunSimulation}
           disabled={isRunning}
           className="flex-1"
         >
           <Play className="w-4 h-4 mr-2" />
           {isRunning ? 'Generating...' : 'Recommend'}
+<<<<<<< HEAD
         </Button>
+=======
+        </Button> */}
+>>>>>>> 5849f9d15c2908b9db4a595283c80536ac190aa1
 
         <Button
           onClick={onResetSimulation}

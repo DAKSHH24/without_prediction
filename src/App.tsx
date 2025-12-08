@@ -27,6 +27,8 @@ import {
   Legend,
   ResponsiveContainer,
   CartesianGrid,
+  BarChart,
+  Bar,
 } from 'recharts';
 
 
@@ -302,17 +304,8 @@ export default function App() {
   // Update grid data based on current parameters
   const updateGridDataFromParameters = (params: SimulationParameters) => {
     setGridData(prev => prev.map(cell => {
-      // Base emission for this cell type
-      let baseEmission = 0;
-      switch (cell.type) {
-        case 'industrial': baseEmission = Math.random() * 60 + 30; break;
-        case 'commercial': baseEmission = Math.random() * 40 + 20; break;
-        case 'transport': baseEmission = Math.random() * 35 + 15; break;
-        case 'residential': baseEmission = Math.random() * 25 + 5; break;
-      }
-
-      // Apply factor modifiers
-      let emission = baseEmission;
+      // Use the stored base emission instead of regenerating random values
+      let emission = cell.baseEmission;
 
       // Green areas reduce emissions
       emission *= (1 - params.green / 200);
@@ -834,6 +827,145 @@ export default function App() {
                           <div className="text-sm text-gray-400 italic">No interventions placed yet</div>
                         )}
                       </div>
+
+                      {/* Mini Charts Section */}
+                      <div className="space-y-3 pt-2 border-t border-gray-200">
+                        <div className="text-sm text-gray-500 mb-2">Data Visualization</div>
+
+                        {/* Before/After Chart */}
+                        <div className="bg-gray-50 p-3 rounded-lg">
+                          <div className="text-xs text-gray-600 mb-2">Before/After Interventions</div>
+                          <ResponsiveContainer width="100%" height={80}>
+                            <BarChart data={[
+                              {
+                                name: 'Before',
+                                emission: selectedCell.baseEmission,
+                                color: '#ef4444'
+                              },
+                              {
+                                name: 'After',
+                                emission: selectedCell.emission,
+                                color: '#22c55e'
+                              }
+                            ]}>
+                              <Bar dataKey="emission" fill="#8884d8">
+                                {[
+                                  { name: 'Before', emission: selectedCell.baseEmission, color: '#ef4444' },
+                                  { name: 'After', emission: selectedCell.emission, color: '#22c55e' }
+                                ].map((entry, index) => (
+                                  <Cell key={`cell-${index}`} fill={entry.color} />
+                                ))}
+                              </Bar>
+                              <XAxis
+                                dataKey="name"
+                                axisLine={false}
+                                tickLine={false}
+                                tick={{ fontSize: 8 }}
+                              />
+                              <YAxis hide />
+                              <Tooltip
+                                formatter={(value: number) => [`${value.toFixed(1)} tons CO₂`, 'Emission']}
+                                labelStyle={{ fontSize: '10px' }}
+                                contentStyle={{ fontSize: '10px', padding: '4px' }}
+                              />
+                            </BarChart>
+                          </ResponsiveContainer>
+                          <div className="flex justify-center gap-4 text-xs mt-1">
+                            <div className="flex items-center gap-1">
+                              <div className="w-2 h-2 bg-red-500 rounded"></div>
+                              <span>Before: {selectedCell.baseEmission.toFixed(1)}t</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <div className="w-2 h-2 bg-green-500 rounded"></div>
+                              <span>After: {selectedCell.emission.toFixed(1)}t</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Intervention Impact Chart */}
+                        {selectedCell.interventions.length > 0 && (
+                          <div className="bg-gray-50 p-3 rounded-lg">
+                            <div className="text-xs text-gray-600 mb-2">Intervention Impact</div>
+                            <ResponsiveContainer width="100%" height={80}>
+                              <PieChart>
+                                <Pie
+                                  data={[
+                                    {
+                                      name: 'Reduced',
+                                      value: selectedCell.baseEmission - selectedCell.emission,
+                                      color: '#22c55e'
+                                    },
+                                    {
+                                      name: 'Remaining',
+                                      value: selectedCell.emission,
+                                      color: '#ef4444'
+                                    }
+                                  ]}
+                                  cx="50%"
+                                  cy="50%"
+                                  innerRadius={15}
+                                  outerRadius={30}
+                                  paddingAngle={2}
+                                  dataKey="value"
+                                >
+                                  {[
+                                    { name: 'Reduced', value: selectedCell.baseEmission - selectedCell.emission, color: '#22c55e' },
+                                    { name: 'Remaining', value: selectedCell.emission, color: '#ef4444' }
+                                  ].map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={entry.color} />
+                                  ))}
+                                </Pie>
+                                <Tooltip
+                                  formatter={(value: number) => [`${value.toFixed(1)} tons`, '']}
+                                  labelStyle={{ fontSize: '10px' }}
+                                  contentStyle={{ fontSize: '10px', padding: '4px' }}
+                                />
+                              </PieChart>
+                            </ResponsiveContainer>
+                            <div className="flex justify-center gap-4 text-xs mt-1">
+                              <div className="flex items-center gap-1">
+                                <div className="w-2 h-2 bg-green-500 rounded"></div>
+                                <span>Reduced</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <div className="w-2 h-2 bg-red-500 rounded"></div>
+                                <span>Remaining</span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Emission Comparison Chart */}
+                        <div className="bg-gray-50 p-3 rounded-lg">
+                          <div className="text-xs text-gray-600 mb-2">vs Zone Average</div>
+                          <ResponsiveContainer width="100%" height={60}>
+                            <BarChart data={[
+                              {
+                                name: 'This Cell',
+                                emission: selectedCell.emission,
+                                avg: gridData.filter(cell => cell.type === selectedCell.type)
+                                  .reduce((sum, cell) => sum + cell.emission, 0) /
+                                  gridData.filter(cell => cell.type === selectedCell.type).length
+                              }
+                            ]}>
+                              <Bar dataKey="emission" fill="#3b82f6" name="This Cell" />
+                              <Bar dataKey="avg" fill="#94a3b8" name="Zone Avg" />
+                              <XAxis
+                                dataKey="name"
+                                axisLine={false}
+                                tickLine={false}
+                                tick={{ fontSize: 8 }}
+                              />
+                              <YAxis hide />
+                              <Tooltip
+                                formatter={(value: number) => [`${value.toFixed(1)} tons`, '']}
+                                labelStyle={{ fontSize: '10px' }}
+                                contentStyle={{ fontSize: '10px', padding: '4px' }}
+                              />
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </div>
                     </div>
                   ) : (
                     <div className="flex flex-col items-center justify-center h-40 text-gray-400 text-center">
@@ -917,6 +1049,7 @@ export default function App() {
                 isRunning={isSimulationRunning}
                 currentScenario={currentScenario}
               />
+<<<<<<< HEAD
               {/* Map and Recommendation Panel side by side */}
               <div className="lg:col-span-2 flex flex-col lg:flex-row gap-4 items-start">
                 {/* Map - takes full space */}
@@ -935,8 +1068,115 @@ export default function App() {
                     onToggleVisibility={() => setShowRecommendations(!showRecommendations)}
                   />
                 </div> */}
+=======
+              {/* Map - full width */}
+              <div className="lg:col-span-2">
+                <FixedGridMap
+                  cellEmissions={cellEmissions}
+                  onCellSelect={handleCellSelect}
+                  selectedCellId={selectedCell?.id || null}
+                />
+>>>>>>> 5849f9d15c2908b9db4a595283c80536ac190aa1
               </div>
             </div>
+
+            {/* Before/After Analysis Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Before/After KPI Comparison */}
+              <Card className="p-6">
+                <h3 className="text-lg font-semibold mb-4">Before/After Comparison</h3>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-center p-3 bg-red-50 rounded-lg">
+                      <div className="text-sm text-gray-600">Before Simulation</div>
+                      <div className="text-2xl font-bold text-red-600">{baselineKPIs.totalEmissions.toFixed(1)}</div>
+                      <div className="text-xs text-gray-500">tons CO₂/year</div>
+                    </div>
+                    <div className="text-center p-3 bg-green-50 rounded-lg">
+                      <div className="text-sm text-gray-600">After Simulation</div>
+                      <div className="text-2xl font-bold text-green-600">{currentKPIs.totalEmissions.toFixed(1)}</div>
+                      <div className="text-xs text-gray-500">tons CO₂/year</div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Emission Reduction:</span>
+                      <span className={`text-sm font-semibold ${currentKPIs.emissionReduction >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {currentKPIs.emissionReduction.toFixed(1)}%
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Total Savings:</span>
+                      <span className="text-sm font-semibold text-green-600">
+                        {currentKPIs.projectedSavings.toFixed(1)} tons/year
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Hotspots Remaining:</span>
+                      <span className="text-sm font-semibold text-orange-600">
+                        {currentKPIs.hotspotCount}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Before/After Chart */}
+              <Card className="p-6">
+                <h3 className="text-lg font-semibold mb-4">Emission Impact</h3>
+                <ResponsiveContainer width="100%" height={200}>
+                  <BarChart data={[
+                    {
+                      category: 'Total Emissions',
+                      before: baselineKPIs.totalEmissions,
+                      after: currentKPIs.totalEmissions,
+                    },
+                    {
+                      category: 'Hotspots',
+                      before: baselineKPIs.hotspotCount,
+                      after: currentKPIs.hotspotCount,
+                    }
+                  ]}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="category" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="before" fill="#ef4444" name="Before" />
+                    <Bar dataKey="after" fill="#22c55e" name="After" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Card>
+            </div>
+
+            {/* Simulation Legend */}
+            <Card className="p-6">
+              <h3 className="text-lg font-semibold mb-4">Simulation Legend</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-red-500 rounded"></div>
+                  <span className="text-sm">Very High (&gt;250 tons)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-orange-500 rounded"></div>
+                  <span className="text-sm">High (150-250 tons)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-yellow-500 rounded"></div>
+                  <span className="text-sm">Medium (50-150 tons)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-green-500 rounded"></div>
+                  <span className="text-sm">Low (&lt;50 tons)</span>
+                </div>
+              </div>
+              <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  💡 Adjust the sliders above to see real-time changes in emission levels and hotspot distribution across the map.
+                </p>
+              </div>
+            </Card>
           </TabsContent>
           <TabsContent value="prediction" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">

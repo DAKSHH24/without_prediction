@@ -24,6 +24,7 @@ interface SimulationControlsProps {
   onSaveScenario: () => void;
   isRunning: boolean;
   currentScenario: string;
+  selectedCellId?: string | null;
 }
 
 export function SimulationControls({
@@ -33,7 +34,8 @@ export function SimulationControls({
   onResetSimulation,
   onSaveScenario,
   isRunning,
-  currentScenario
+  currentScenario,
+  selectedCellId
 }: SimulationControlsProps) {
   return (
     <Card className="p-4">
@@ -43,6 +45,14 @@ export function SimulationControls({
       </div>
 
       <div className="space-y-4">
+        {!selectedCellId && (
+          <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <p className="text-sm text-yellow-800">
+              🔸 Select a cell on the map to apply local simulation changes
+            </p>
+          </div>
+        )}
+
         <div>
           <label className="block text-sm mb-2">
             Green Areas: {parameters.green}%
@@ -54,6 +64,7 @@ export function SimulationControls({
             min={0}
             step={5}
             className="w-full"
+            disabled={!selectedCellId}
           />
         </div>
 
@@ -68,6 +79,7 @@ export function SimulationControls({
             min={0}
             step={5}
             className="w-full"
+            disabled={!selectedCellId}
           />
         </div>
 
@@ -82,6 +94,7 @@ export function SimulationControls({
             min={0}
             step={5}
             className="w-full"
+            disabled={!selectedCellId}
           />
         </div>
 
@@ -96,6 +109,7 @@ export function SimulationControls({
             min={0}
             step={5}
             className="w-full"
+            disabled={!selectedCellId}
           />
         </div>
 
@@ -110,6 +124,7 @@ export function SimulationControls({
             min={0}
             step={5}
             className="w-full"
+            disabled={!selectedCellId}
           />
         </div>
 
@@ -124,6 +139,7 @@ export function SimulationControls({
             min={0}
             step={5}
             className="w-full"
+            disabled={!selectedCellId}
           />
         </div>
 
@@ -138,6 +154,7 @@ export function SimulationControls({
             min={0}
             step={5}
             className="w-full"
+            disabled={!selectedCellId}
           />
         </div>
 
@@ -152,6 +169,7 @@ export function SimulationControls({
             min={0}
             step={5}
             className="w-full"
+            disabled={!selectedCellId}
           />
         </div>
       </div>
@@ -183,7 +201,7 @@ export function SimulationControls({
 
       <div className="mt-4 p-3 bg-blue-50 rounded-lg text-sm">
         <p className="text-blue-800">
-          💡 <span>Tip:</span> Adjust factors to see real-time impact on CO₂ emissions across the neighborhood map.
+          💡 Select a cell on the map, then adjust the sliders to see localized impact on that cell and its neighbors.
         </p>
       </div>
     </Card>

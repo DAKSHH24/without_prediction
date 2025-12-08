@@ -41,6 +41,7 @@ interface GridCell {
   type: 'residential' | 'industrial' | 'commercial' | 'transport';
   interventions: Intervention[];
   baseEmission: number;
+  simulationParams?: SimulationParameters; // Cell-specific simulation parameters
 }
 
 interface Intervention {
@@ -117,6 +118,59 @@ export default function App() {
     publicTransport: 40,
   });
 
+  // Generate default simulation parameters based on emission level
+  const getDefaultSimulationParams = (emission: number): SimulationParameters => {
+    if (emission >= 250) {
+      // Red - Very High emissions: poor environmental factors
+      return {
+        green: 10,        // Very low green areas
+        building: 90,     // Very high building density
+        water: 5,         // Very low water bodies
+        vehicles: 95,     // Very high vehicles
+        industrial: 90,   // Very high industrial activity
+        energy: 95,       // Very high energy consumption
+        congestion: 90,   // Very high congestion
+        publicTransport: 15, // Very low public transport
+      };
+    } else if (emission >= 150) {
+      // Orange - High emissions: moderate environmental factors
+      return {
+        green: 20,        // Low green areas
+        building: 80,     // High building density
+        water: 10,        // Low water bodies
+        vehicles: 85,     // High vehicles
+        industrial: 75,   // High industrial activity
+        energy: 85,       // High energy consumption
+        congestion: 75,   // High congestion
+        publicTransport: 25, // Low public transport
+      };
+    } else if (emission >= 50) {
+      // Yellow - Medium emissions: balanced factors
+      return {
+        green: 40,        // Medium green areas
+        building: 60,     // Medium building density
+        water: 25,        // Medium water bodies
+        vehicles: 65,     // Medium vehicles
+        industrial: 55,   // Medium industrial activity
+        energy: 70,       // Medium energy consumption
+        congestion: 60,   // Medium congestion
+        publicTransport: 45, // Medium public transport
+      };
+    } else {
+      // Green - Low emissions: good environmental factors
+      return {
+        green: 70,        // High green areas
+        building: 30,     // Low building density
+        water: 60,        // High water bodies
+        vehicles: 35,     // Low vehicles
+        industrial: 25,   // Low industrial activity
+        energy: 40,       // Low energy consumption
+        congestion: 30,   // Low congestion
+        publicTransport: 75, // High public transport
+      };
+    }
+  };
+
   // Mock data
   const [gridData, setGridData] = useState<GridCell[]>(() => {
     const cells: GridCell[] = [];
@@ -141,7 +195,8 @@ export default function App() {
         emission: baseEmission,
         type,
         baseEmission,
-        interventions: []
+        interventions: [],
+        simulationParams: getDefaultSimulationParams(baseEmission)
       });
     }
     return cells;
@@ -287,63 +342,141 @@ export default function App() {
     setSelectedCell(cell);
   };
 
+  // Save current simulation parameters to the selected cell
+  const saveParamsToCurrentCell = () => {
+    if (selectedCell) {
+      setGridData(prev => prev.map(cell =>
+        cell.id === selectedCell.id
+          ? { ...cell, simulationParams: { ...parameters } }
+          : cell
+      ));
+    }
+  };
+
+  // Load simulation parameters from a cell
+  const loadParamsFromCell = (cell: GridCell) => {
+    if (cell.simulationParams) {
+      setParameters(cell.simulationParams);
+    } else {
+      // If no params saved, use color-based defaults
+      setParameters(getDefaultSimulationParams(cell.baseEmission));
+    }
+  };
+
   const handleCellSelect = (data: { row: number; col: number; cellId: string; bounds: [[number, number], [number, number]] }) => {
+    // Save current parameters to the previously selected cell
+    saveParamsToCurrentCell();
+
     const index = data.row * 12 + data.col;
     const cell = gridData[index];
     if (cell) {
+      // Load parameters for the newly selected cell
+      loadParamsFromCell(cell);
       setSelectedCell(cell);
     }
   };
 
   const handleParameterChange = (key: keyof SimulationParameters, value: number) => {
-    setParameters(prev => ({ ...prev, [key]: value }));
+    const newParams = { ...parameters, [key]: value };
+    setParameters(newParams);
+    // Save to current cell
+    saveParamsToCurrentCell();
     // Update grid data in real-time based on factor changes
-    updateGridDataFromParameters({ ...parameters, [key]: value });
+    updateGridDataFromParameters(newParams);
+  };
+
+  // Helper function to get neighboring cells
+  const getNeighboringCells = (centerCell: GridCell, allCells: GridCell[]): GridCell[] => {
+    const neighbors: GridCell[] = [];
+    const centerX = centerCell.x;
+    const centerY = centerCell.y;
+
+    // Check all 8 adjacent cells plus the center cell
+    for (let dx = -1; dx <= 1; dx++) {
+      for (let dy = -1; dy <= 1; dy++) {
+        const neighborX = centerX + dx;
+        const neighborY = centerY + dy;
+
+        // Check bounds (12x12 grid)
+        if (neighborX >= 0 && neighborX < 12 && neighborY >= 0 && neighborY < 12) {
+          const neighbor = allCells.find(cell => cell.x === neighborX && cell.y === neighborY);
+          if (neighbor) {
+            neighbors.push(neighbor);
+          }
+        }
+      }
+    }
+
+    return neighbors;
+  };
+
+  // Get IDs of cells affected by simulation
+  const getAffectedCellIds = (): string[] => {
+    if (!selectedCell) return [];
+    const affectedCells = getNeighboringCells(selectedCell, gridData);
+    return affectedCells.map(cell => cell.id);
   };
 
   // Update grid data based on current parameters
   const updateGridDataFromParameters = (params: SimulationParameters) => {
-    setGridData(prev => prev.map(cell => {
-      // Use the stored base emission instead of regenerating random values
-      let emission = cell.baseEmission;
-
-      // Green areas reduce emissions
-      emission *= (1 - params.green / 200);
-
-      // Building density increases emissions
-      emission *= (0.5 + params.building / 100);
-
-      // Water bodies reduce emissions slightly
-      emission *= (1 - params.water / 300);
-
-      // Vehicles increase emissions
-      emission *= (0.4 + params.vehicles / 100);
-
-      // Industrial activity affects industrial zones more
-      if (cell.type === 'industrial') {
-        emission *= (0.5 + params.industrial / 80);
-      } else {
-        emission *= (0.7 + params.industrial / 200);
+    setGridData(prev => {
+      // If no cell is selected, don't update anything
+      if (!selectedCell) {
+        return prev;
       }
 
-      // Energy consumption increases emissions
-      emission *= (0.5 + params.energy / 100);
+      // Get the selected cell and its neighbors
+      const cellsToUpdate = getNeighboringCells(selectedCell, prev);
 
-      // Congestion increases transport emissions
-      if (cell.type === 'transport') {
-        emission *= (0.6 + params.congestion / 100);
-      } else {
-        emission *= (0.8 + params.congestion / 200);
-      }
+      return prev.map(cell => {
+        // Only update cells that are the selected cell or its neighbors
+        const shouldUpdate = cellsToUpdate.some(updateCell => updateCell.id === cell.id);
 
-      // Public transport reduces emissions
-      emission *= (1.2 - params.publicTransport / 150);
+        if (!shouldUpdate) {
+          return cell; // Return unchanged
+        }
 
-      return {
-        ...cell,
-        emission: Math.max(0, emission)
-      };
-    }));
+        // Use the stored base emission instead of regenerating random values
+        let emission = cell.baseEmission;
+
+        // Green areas reduce emissions
+        emission *= (1 - params.green / 200);
+
+        // Building density increases emissions
+        emission *= (0.5 + params.building / 100);
+
+        // Water bodies reduce emissions slightly
+        emission *= (1 - params.water / 300);
+
+        // Vehicles increase emissions
+        emission *= (0.4 + params.vehicles / 100);
+
+        // Industrial activity affects industrial zones more
+        if (cell.type === 'industrial') {
+          emission *= (0.5 + params.industrial / 80);
+        } else {
+          emission *= (0.7 + params.industrial / 200);
+        }
+
+        // Energy consumption increases emissions
+        emission *= (0.5 + params.energy / 100);
+
+        // Congestion increases transport emissions
+        if (cell.type === 'transport') {
+          emission *= (0.6 + params.congestion / 100);
+        } else {
+          emission *= (0.8 + params.congestion / 200);
+        }
+
+        // Public transport reduces emissions
+        emission *= (1.2 - params.publicTransport / 150);
+
+        return {
+          ...cell,
+          emission: Math.max(0, emission)
+        };
+      });
+    });
   };
 
   const handleRunSimulation = () => {
@@ -722,7 +855,24 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-green-50">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-emerald-50 relative overflow-hidden">
+      {/* Background decorative elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        {/* Large decorative blob - top right */}
+        <div className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-green-200/30 to-blue-300/30 rounded-full blur-3xl"></div>
+
+        {/* Medium blob - bottom left */}
+        <div className="absolute -bottom-32 -left-32 w-80 h-80 bg-gradient-to-tr from-emerald-200/25 to-green-300/25 rounded-full blur-3xl"></div>
+
+        {/* Small accent blob - center right */}
+        <div className="absolute top-1/3 right-1/4 w-64 h-64 bg-gradient-to-bl from-blue-200/20 to-green-200/20 rounded-full blur-2xl"></div>
+
+        {/* Tiny accent blob - bottom center */}
+        <div className="absolute bottom-1/4 left-1/3 w-48 h-48 bg-gradient-to-tr from-emerald-100/15 to-blue-100/15 rounded-full blur-xl"></div>
+      </div>
+
+      {/* Content overlay */}
+      <div className="relative z-10">
       <div className="container mx-auto p-4">
         {/* Header */}
         <div className="mb-6">
@@ -1039,6 +1189,14 @@ export default function App() {
                     publicTransport: 40,
                   };
                   setParameters(defaultParams);
+                  // Reset current cell's simulation parameters
+                  if (selectedCell) {
+                    setGridData(prev => prev.map(cell =>
+                      cell.id === selectedCell.id
+                        ? { ...cell, simulationParams: { ...defaultParams } }
+                        : cell
+                    ));
+                  }
                   updateGridDataFromParameters(defaultParams);
                   toast.success('Parameters reset to default');
                 }}
@@ -1048,6 +1206,7 @@ export default function App() {
                 }}
                 isRunning={isSimulationRunning}
                 currentScenario={currentScenario}
+                selectedCellId={selectedCell?.id || null}
               />
               {/* Map - full width */}
               <div className="lg:col-span-2">
@@ -1055,6 +1214,7 @@ export default function App() {
                   cellEmissions={cellEmissions}
                   onCellSelect={handleCellSelect}
                   selectedCellId={selectedCell?.id || null}
+                  affectedCellIds={getAffectedCellIds()}
                 />
               </div>
             </div>
@@ -1132,7 +1292,15 @@ export default function App() {
             {/* Simulation Legend */}
             <Card className="p-6">
               <h3 className="text-lg font-semibold mb-4">Simulation Legend</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-blue-600 rounded border-2 border-blue-600"></div>
+                  <span className="text-sm">Selected Cell</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-orange-400 rounded border-2 border-orange-400"></div>
+                  <span className="text-sm">Affected Area</span>
+                </div>
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 bg-red-500 rounded"></div>
                   <span className="text-sm">Very High (&gt;250 tons)</span>
@@ -1145,6 +1313,8 @@ export default function App() {
                   <div className="w-4 h-4 bg-yellow-500 rounded"></div>
                   <span className="text-sm">Medium (50-150 tons)</span>
                 </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 bg-green-500 rounded"></div>
                   <span className="text-sm">Low (&lt;50 tons)</span>
@@ -1152,7 +1322,7 @@ export default function App() {
               </div>
               <div className="mt-4 p-3 bg-blue-50 rounded-lg">
                 <p className="text-sm text-blue-800">
-                  💡 Adjust the sliders above to see real-time changes in emission levels and hotspot distribution across the map.
+                  💡 Select a cell on the map, then adjust the sliders to see localized impact on that cell and its 8 neighboring cells.
                 </p>
               </div>
             </Card>
@@ -1472,6 +1642,7 @@ export default function App() {
             </div>
           </TabsContent>
         </Tabs>
+      </div>
       </div>
     </div>
   );

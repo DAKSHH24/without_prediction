@@ -24,7 +24,21 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     };
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-green-50 p-4">
+        <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-emerald-50 relative overflow-hidden p-4">
+            {/* Background decorative elements */}
+            <div className="absolute inset-0 overflow-hidden">
+                {/* Large decorative blob - top right */}
+                <div className="absolute -top-20 -right-20 w-72 h-72 bg-gradient-to-br from-green-200/25 to-blue-300/25 rounded-full blur-3xl"></div>
+
+                {/* Medium blob - bottom left */}
+                <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-gradient-to-tr from-emerald-200/20 to-green-300/20 rounded-full blur-3xl"></div>
+
+                {/* Small accent blob - center */}
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-56 h-56 bg-gradient-to-bl from-blue-200/15 to-green-200/15 rounded-full blur-2xl"></div>
+            </div>
+
+            {/* Content overlay */}
+            <div className="relative z-10 flex items-center justify-center min-h-screen">
             <Card className="w-full max-w-sm p-6 shadow-xl border-green-100">
                 <div className="flex flex-col items-center mb-8">
                     <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4 text-green-600">
@@ -93,6 +107,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                     </Button>
                 </form>
             </Card>
+            </div>
         </div>
     );
 };

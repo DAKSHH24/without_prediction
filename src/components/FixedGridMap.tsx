@@ -21,10 +21,11 @@ interface FixedGridMapProps {
   cellEmissions?: number[][];
   onCellSelect?: (data: { row: number; col: number; cellId: string; bounds: [[number, number], [number, number]] }) => void;
   selectedCellId?: string | null;
+  affectedCellIds?: string[];
 }
 
 // Component to create the grid pane and render rectangles
-function FixedGridOverlay({ cellEmissions, onCellSelect, selectedCellId }: FixedGridMapProps) {
+function FixedGridOverlay({ cellEmissions, onCellSelect, selectedCellId, affectedCellIds }: FixedGridMapProps) {
   const map = useMap();
   const [paneReady, setPaneReady] = React.useState(false);
 
@@ -96,6 +97,7 @@ function FixedGridOverlay({ cellEmissions, onCellSelect, selectedCellId }: Fixed
     <>
       {gridCells.map(cell => {
         const isSelected = cell.cellId === selectedCellId;
+        const isAffected = affectedCellIds?.includes(cell.cellId);
 
         return (
           <Rectangle
@@ -103,9 +105,9 @@ function FixedGridOverlay({ cellEmissions, onCellSelect, selectedCellId }: Fixed
             bounds={cell.bounds}
             pane="gridPane"
             pathOptions={{
-              fillOpacity: 0.35,
-              color: isSelected ? "#2563eb" : "#ffffff", // Blue if selected, white otherwise
-              weight: isSelected ? 3 : 0.7, // Thicker border if selected
+              fillOpacity: isAffected ? 0.6 : 0.35, // More opaque if affected
+              color: isSelected ? "#2563eb" : isAffected ? "#f59e0b" : "#ffffff", // Blue if selected, orange if affected, white otherwise
+              weight: isSelected ? 3 : isAffected ? 2 : 0.7, // Thicker border if selected or affected
               fillColor: getEmissionColor(getCellEmission(cell.row, cell.col)),
             }}
             eventHandlers={{
@@ -126,7 +128,7 @@ function FixedGridOverlay({ cellEmissions, onCellSelect, selectedCellId }: Fixed
 }
 
 // Main FixedGridMap component
-export function FixedGridMap({ cellEmissions, onCellSelect, selectedCellId }: FixedGridMapProps) {
+export function FixedGridMap({ cellEmissions, onCellSelect, selectedCellId, affectedCellIds }: FixedGridMapProps) {
   // Calculate center of the bounding box
   const center: [number, number] = [
     (PUNE_BOUNDS.topLeft[0] + PUNE_BOUNDS.bottomRight[0]) / 2,
@@ -170,6 +172,7 @@ export function FixedGridMap({ cellEmissions, onCellSelect, selectedCellId }: Fi
             cellEmissions={cellEmissions}
             onCellSelect={onCellSelect}
             selectedCellId={selectedCellId}
+            affectedCellIds={affectedCellIds}
           />
         </MapContainer>
       </div>

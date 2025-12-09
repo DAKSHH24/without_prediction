@@ -1208,26 +1208,6 @@ export default function App() {
                 currentScenario={currentScenario}
                 selectedCellId={selectedCell?.id || null}
               />
-<<<<<<< HEAD
-              {/* Map and Recommendation Panel side by side */}
-              <div className="lg:col-span-2 flex flex-col lg:flex-row gap-4 items-start">
-                {/* Map - takes full space */}
-                <div className="w-full">
-                  <FixedGridMap
-                    cellEmissions={cellEmissions}
-                    onCellSelect={handleCellSelect}
-                    selectedCellId={selectedCell?.id || null}
-                  />
-                </div>
-                {/* Recommendation Panel - Hidden */}
-                {/* <div className="w-full lg:w-[32%] flex-shrink-0">
-                  <RecommendationPanel
-                    recommendations={recommendations}
-                    isVisible={showRecommendations}
-                    onToggleVisibility={() => setShowRecommendations(!showRecommendations)}
-                  />
-                </div> */}
-=======
               {/* Map - full width */}
               <div className="lg:col-span-2">
                 <FixedGridMap
@@ -1236,7 +1216,6 @@ export default function App() {
                   selectedCellId={selectedCell?.id || null}
                   affectedCellIds={getAffectedCellIds()}
                 />
->>>>>>> 5849f9d15c2908b9db4a595283c80536ac190aa1
               </div>
             </div>
 

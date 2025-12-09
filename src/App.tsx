@@ -873,776 +873,776 @@ export default function App() {
 
       {/* Content overlay */}
       <div className="relative z-10">
-      <div className="container mx-auto p-4">
-        {/* Header */}
-        <div className="mb-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl">VayuVision</h1>
-              <p className="text-gray-600 mt-1">
-                Simulate, visualize, and plan carbon capture strategies for urban neighborhoods
-              </p>
+        <div className="container mx-auto p-4">
+          {/* Header */}
+          <div className="mb-6">
+            <div className="flex justify-between items-center">
+              <div>
+                <h1 className="text-3xl">VayuVision</h1>
+                <p className="text-gray-600 mt-1">
+                  Simulate, visualize, and plan carbon capture strategies for urban neighborhoods
+                </p>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Main Content */}
-        <Tabs defaultValue="dashboard" className="w-full">
-          <TabsList className="w-full flex flex-row gap-2">
-            <TabsTrigger value="dashboard" className="flex-1">
-              <BarChart3 className="w-4 h-4 mr-2" />
-              Dashboard
-            </TabsTrigger>
+          {/* Main Content */}
+          <Tabs defaultValue="dashboard" className="w-full">
+            <TabsList className="w-full flex flex-row gap-2">
+              <TabsTrigger value="dashboard" className="flex-1">
+                <BarChart3 className="w-4 h-4 mr-2" />
+                Dashboard
+              </TabsTrigger>
 
-            <TabsTrigger value="map" className="flex-1">
-              <Map className="w-4 h-4 mr-2" />
-              Interactive Map
-            </TabsTrigger>
+              <TabsTrigger value="map" className="flex-1">
+                <Map className="w-4 h-4 mr-2" />
+                Interactive Map
+              </TabsTrigger>
 
-            <TabsTrigger value="simulation" className="flex-1">
-              <Settings className="w-4 h-4 mr-2" />
-              Simulation
-            </TabsTrigger>
+              <TabsTrigger value="simulation" className="flex-1">
+                <Settings className="w-4 h-4 mr-2" />
+                Simulation
+              </TabsTrigger>
 
-            {/* <TabsTrigger value="prediction" className="flex-1">
-              <TrendingUp className="w-4 h-4 mr-2" />
-              Prediction
-            </TabsTrigger> */}
-          </TabsList>
+              <TabsTrigger value="prediction" className="flex-1">
+                <TrendingUp className="w-4 h-4 mr-2" />
+                Prediction
+              </TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="dashboard" className="space-y-6">
-            <KPIMetrics
-              currentKPI={currentKPIs}
-              baselineKPI={baselineKPIs}
-              historicalData={historicalData}
-              emissionsByType={emissionsByType}
-            />
-          </TabsContent>
+            <TabsContent value="dashboard" className="space-y-6">
+              <KPIMetrics
+                currentKPI={currentKPIs}
+                baselineKPI={baselineKPIs}
+                historicalData={historicalData}
+                emissionsByType={emissionsByType}
+              />
+            </TabsContent>
 
-          <TabsContent value="map" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-              {/* Map - takes full left width */}
-              {/* Map Layout with Side Panel */}
-              {/* Details (Left), Map (Center), Interventions (Right) */}
+            <TabsContent value="map" className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                {/* Map - takes full left width */}
+                {/* Map Layout with Side Panel */}
+                {/* Details (Left), Map (Center), Interventions (Right) */}
 
-              {/* Left Side: Cell Details Panel */}
-              <div className="lg:col-span-1 space-y-4">
-                <Card className="p-4 h-full">
-                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                    <Search className="w-5 h-5 text-gray-500" />
-                    Cell Details
-                  </h3>
+                {/* Left Side: Cell Details Panel */}
+                <div className="lg:col-span-1 space-y-4">
+                  <Card className="p-4 h-full">
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <Search className="w-5 h-5 text-gray-500" />
+                      Cell Details
+                    </h3>
 
-                  {selectedCell ? (
-                    <div className="space-y-4 animate-in fade-in duration-300">
-                      <div>
-                        <div className="text-sm text-gray-500 mb-1">Cell ID</div>
-                        <div className="text-2xl font-mono font-medium">{selectedCell.id}</div>
-                      </div>
-
-                      <div>
-                        <div className="text-sm text-gray-500 mb-1">Zone Type</div>
-                        <Badge variant="outline" className="text-base capitalize">
-                          {selectedCell.type}
-                        </Badge>
-                      </div>
-
-                      <div>
-                        <div className="text-sm text-gray-500 mb-1">Current Emission</div>
-                        <div className={`text-xl font-bold ${selectedCell.emission > 150 ? 'text-red-600' :
-                          selectedCell.emission > 50 ? 'text-orange-500' : 'text-green-600'
-                          }`}>
-                          {selectedCell.emission.toFixed(1)} <span className="text-sm font-normal text-gray-600">tons/year</span>
+                    {selectedCell ? (
+                      <div className="space-y-4 animate-in fade-in duration-300">
+                        <div>
+                          <div className="text-sm text-gray-500 mb-1">Cell ID</div>
+                          <div className="text-2xl font-mono font-medium">{selectedCell.id}</div>
                         </div>
-                      </div>
 
-                      <div>
-                        <div className="text-sm text-gray-500 mb-1">Active Interventions</div>
-                        {selectedCell.interventions.length > 0 ? (
-                          <div className="flex flex-wrap gap-2">
-                            {selectedCell.interventions.map((i, idx) => {
-                              const reductionAmount = selectedCell.baseEmission * (i.efficiency / 100);
-                              return (
-                                <div key={idx} className="flex items-center gap-1 bg-blue-50 text-blue-700 px-2 py-1 rounded text-sm">
-                                  <span>{i.icon}</span>
-                                  <span>{i.name}</span>
-                                  <span className="font-semibold ml-1">
-                                    (-{reductionAmount.toFixed(1)} tons)
-                                  </span>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        ) : (
-                          <div className="text-sm text-gray-400 italic">No interventions placed yet</div>
-                        )}
-                      </div>
+                        <div>
+                          <div className="text-sm text-gray-500 mb-1">Zone Type</div>
+                          <Badge variant="outline" className="text-base capitalize">
+                            {selectedCell.type}
+                          </Badge>
+                        </div>
 
-                      {/* Mini Charts Section */}
-                      <div className="space-y-3 pt-2 border-t border-gray-200">
-                        <div className="text-sm text-gray-500 mb-2">Data Visualization</div>
-
-                        {/* Before/After Chart */}
-                        <div className="bg-gray-50 p-3 rounded-lg">
-                          <div className="text-xs text-gray-600 mb-2">Before/After Interventions</div>
-                          <ResponsiveContainer width="100%" height={80}>
-                            <BarChart data={[
-                              {
-                                name: 'Before',
-                                emission: selectedCell.baseEmission,
-                                color: '#ef4444'
-                              },
-                              {
-                                name: 'After',
-                                emission: selectedCell.emission,
-                                color: '#22c55e'
-                              }
-                            ]}>
-                              <Bar dataKey="emission" fill="#8884d8">
-                                {[
-                                  { name: 'Before', emission: selectedCell.baseEmission, color: '#ef4444' },
-                                  { name: 'After', emission: selectedCell.emission, color: '#22c55e' }
-                                ].map((entry, index) => (
-                                  <Cell key={`cell-${index}`} fill={entry.color} />
-                                ))}
-                              </Bar>
-                              <XAxis
-                                dataKey="name"
-                                axisLine={false}
-                                tickLine={false}
-                                tick={{ fontSize: 8 }}
-                              />
-                              <YAxis hide />
-                              <Tooltip
-                                formatter={(value: number) => [`${value.toFixed(1)} tons CO₂`, 'Emission']}
-                                labelStyle={{ fontSize: '10px' }}
-                                contentStyle={{ fontSize: '10px', padding: '4px' }}
-                              />
-                            </BarChart>
-                          </ResponsiveContainer>
-                          <div className="flex justify-center gap-4 text-xs mt-1">
-                            <div className="flex items-center gap-1">
-                              <div className="w-2 h-2 bg-red-500 rounded"></div>
-                              <span>Before: {selectedCell.baseEmission.toFixed(1)}t</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <div className="w-2 h-2 bg-green-500 rounded"></div>
-                              <span>After: {selectedCell.emission.toFixed(1)}t</span>
-                            </div>
+                        <div>
+                          <div className="text-sm text-gray-500 mb-1">Current Emission</div>
+                          <div className={`text-xl font-bold ${selectedCell.emission > 150 ? 'text-red-600' :
+                            selectedCell.emission > 50 ? 'text-orange-500' : 'text-green-600'
+                            }`}>
+                            {selectedCell.emission.toFixed(1)} <span className="text-sm font-normal text-gray-600">tons/year</span>
                           </div>
                         </div>
 
-                        {/* Intervention Impact Chart */}
-                        {selectedCell.interventions.length > 0 && (
+                        <div>
+                          <div className="text-sm text-gray-500 mb-1">Active Interventions</div>
+                          {selectedCell.interventions.length > 0 ? (
+                            <div className="flex flex-wrap gap-2">
+                              {selectedCell.interventions.map((i, idx) => {
+                                const reductionAmount = selectedCell.baseEmission * (i.efficiency / 100);
+                                return (
+                                  <div key={idx} className="flex items-center gap-1 bg-blue-50 text-blue-700 px-2 py-1 rounded text-sm">
+                                    <span>{i.icon}</span>
+                                    <span>{i.name}</span>
+                                    <span className="font-semibold ml-1">
+                                      (-{reductionAmount.toFixed(1)} tons)
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <div className="text-sm text-gray-400 italic">No interventions placed yet</div>
+                          )}
+                        </div>
+
+                        {/* Mini Charts Section */}
+                        <div className="space-y-3 pt-2 border-t border-gray-200">
+                          <div className="text-sm text-gray-500 mb-2">Data Visualization</div>
+
+                          {/* Before/After Chart */}
                           <div className="bg-gray-50 p-3 rounded-lg">
-                            <div className="text-xs text-gray-600 mb-2">Intervention Impact</div>
+                            <div className="text-xs text-gray-600 mb-2">Before/After Interventions</div>
                             <ResponsiveContainer width="100%" height={80}>
-                              <PieChart>
-                                <Pie
-                                  data={[
-                                    {
-                                      name: 'Reduced',
-                                      value: selectedCell.baseEmission - selectedCell.emission,
-                                      color: '#22c55e'
-                                    },
-                                    {
-                                      name: 'Remaining',
-                                      value: selectedCell.emission,
-                                      color: '#ef4444'
-                                    }
-                                  ]}
-                                  cx="50%"
-                                  cy="50%"
-                                  innerRadius={15}
-                                  outerRadius={30}
-                                  paddingAngle={2}
-                                  dataKey="value"
-                                >
+                              <BarChart data={[
+                                {
+                                  name: 'Before',
+                                  emission: selectedCell.baseEmission,
+                                  color: '#ef4444'
+                                },
+                                {
+                                  name: 'After',
+                                  emission: selectedCell.emission,
+                                  color: '#22c55e'
+                                }
+                              ]}>
+                                <Bar dataKey="emission" fill="#8884d8">
                                   {[
-                                    { name: 'Reduced', value: selectedCell.baseEmission - selectedCell.emission, color: '#22c55e' },
-                                    { name: 'Remaining', value: selectedCell.emission, color: '#ef4444' }
+                                    { name: 'Before', emission: selectedCell.baseEmission, color: '#ef4444' },
+                                    { name: 'After', emission: selectedCell.emission, color: '#22c55e' }
                                   ].map((entry, index) => (
                                     <Cell key={`cell-${index}`} fill={entry.color} />
                                   ))}
-                                </Pie>
+                                </Bar>
+                                <XAxis
+                                  dataKey="name"
+                                  axisLine={false}
+                                  tickLine={false}
+                                  tick={{ fontSize: 8 }}
+                                />
+                                <YAxis hide />
+                                <Tooltip
+                                  formatter={(value: number) => [`${value.toFixed(1)} tons CO₂`, 'Emission']}
+                                  labelStyle={{ fontSize: '10px' }}
+                                  contentStyle={{ fontSize: '10px', padding: '4px' }}
+                                />
+                              </BarChart>
+                            </ResponsiveContainer>
+                            <div className="flex justify-center gap-4 text-xs mt-1">
+                              <div className="flex items-center gap-1">
+                                <div className="w-2 h-2 bg-red-500 rounded"></div>
+                                <span>Before: {selectedCell.baseEmission.toFixed(1)}t</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <div className="w-2 h-2 bg-green-500 rounded"></div>
+                                <span>After: {selectedCell.emission.toFixed(1)}t</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Intervention Impact Chart */}
+                          {selectedCell.interventions.length > 0 && (
+                            <div className="bg-gray-50 p-3 rounded-lg">
+                              <div className="text-xs text-gray-600 mb-2">Intervention Impact</div>
+                              <ResponsiveContainer width="100%" height={80}>
+                                <PieChart>
+                                  <Pie
+                                    data={[
+                                      {
+                                        name: 'Reduced',
+                                        value: selectedCell.baseEmission - selectedCell.emission,
+                                        color: '#22c55e'
+                                      },
+                                      {
+                                        name: 'Remaining',
+                                        value: selectedCell.emission,
+                                        color: '#ef4444'
+                                      }
+                                    ]}
+                                    cx="50%"
+                                    cy="50%"
+                                    innerRadius={15}
+                                    outerRadius={30}
+                                    paddingAngle={2}
+                                    dataKey="value"
+                                  >
+                                    {[
+                                      { name: 'Reduced', value: selectedCell.baseEmission - selectedCell.emission, color: '#22c55e' },
+                                      { name: 'Remaining', value: selectedCell.emission, color: '#ef4444' }
+                                    ].map((entry, index) => (
+                                      <Cell key={`cell-${index}`} fill={entry.color} />
+                                    ))}
+                                  </Pie>
+                                  <Tooltip
+                                    formatter={(value: number) => [`${value.toFixed(1)} tons`, '']}
+                                    labelStyle={{ fontSize: '10px' }}
+                                    contentStyle={{ fontSize: '10px', padding: '4px' }}
+                                  />
+                                </PieChart>
+                              </ResponsiveContainer>
+                              <div className="flex justify-center gap-4 text-xs mt-1">
+                                <div className="flex items-center gap-1">
+                                  <div className="w-2 h-2 bg-green-500 rounded"></div>
+                                  <span>Reduced</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <div className="w-2 h-2 bg-red-500 rounded"></div>
+                                  <span>Remaining</span>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Emission Comparison Chart */}
+                          <div className="bg-gray-50 p-3 rounded-lg">
+                            <div className="text-xs text-gray-600 mb-2">vs Zone Average</div>
+                            <ResponsiveContainer width="100%" height={60}>
+                              <BarChart data={[
+                                {
+                                  name: 'This Cell',
+                                  emission: selectedCell.emission,
+                                  avg: gridData.filter(cell => cell.type === selectedCell.type)
+                                    .reduce((sum, cell) => sum + cell.emission, 0) /
+                                    gridData.filter(cell => cell.type === selectedCell.type).length
+                                }
+                              ]}>
+                                <Bar dataKey="emission" fill="#3b82f6" name="This Cell" />
+                                <Bar dataKey="avg" fill="#94a3b8" name="Zone Avg" />
+                                <XAxis
+                                  dataKey="name"
+                                  axisLine={false}
+                                  tickLine={false}
+                                  tick={{ fontSize: 8 }}
+                                />
+                                <YAxis hide />
                                 <Tooltip
                                   formatter={(value: number) => [`${value.toFixed(1)} tons`, '']}
                                   labelStyle={{ fontSize: '10px' }}
                                   contentStyle={{ fontSize: '10px', padding: '4px' }}
                                 />
-                              </PieChart>
+                              </BarChart>
                             </ResponsiveContainer>
-                            <div className="flex justify-center gap-4 text-xs mt-1">
-                              <div className="flex items-center gap-1">
-                                <div className="w-2 h-2 bg-green-500 rounded"></div>
-                                <span>Reduced</span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <div className="w-2 h-2 bg-red-500 rounded"></div>
-                                <span>Remaining</span>
-                              </div>
-                            </div>
                           </div>
-                        )}
-
-                        {/* Emission Comparison Chart */}
-                        <div className="bg-gray-50 p-3 rounded-lg">
-                          <div className="text-xs text-gray-600 mb-2">vs Zone Average</div>
-                          <ResponsiveContainer width="100%" height={60}>
-                            <BarChart data={[
-                              {
-                                name: 'This Cell',
-                                emission: selectedCell.emission,
-                                avg: gridData.filter(cell => cell.type === selectedCell.type)
-                                  .reduce((sum, cell) => sum + cell.emission, 0) /
-                                  gridData.filter(cell => cell.type === selectedCell.type).length
-                              }
-                            ]}>
-                              <Bar dataKey="emission" fill="#3b82f6" name="This Cell" />
-                              <Bar dataKey="avg" fill="#94a3b8" name="Zone Avg" />
-                              <XAxis
-                                dataKey="name"
-                                axisLine={false}
-                                tickLine={false}
-                                tick={{ fontSize: 8 }}
-                              />
-                              <YAxis hide />
-                              <Tooltip
-                                formatter={(value: number) => [`${value.toFixed(1)} tons`, '']}
-                                labelStyle={{ fontSize: '10px' }}
-                                contentStyle={{ fontSize: '10px', padding: '4px' }}
-                              />
-                            </BarChart>
-                          </ResponsiveContainer>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center h-40 text-gray-400 text-center">
-                      <Map className="w-12 h-12 mb-2 opacity-20" />
-                      <p>Select a grid cell on the map to view details</p>
-                    </div>
-                  )}
-                </Card>
-
-                {/* Intervention Details Linked to Selection */}
-                {selectedIntervention && (
-                  <Card className="p-4 animate-in slide-in-from-top duration-300 border-blue-200 bg-blue-50/50">
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="text-2xl">{selectedIntervention.icon}</span>
-                      <h3 className="text-lg font-semibold">New Intervention</h3>
-                    </div>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Type:</span>
-                        <span className="font-medium">{selectedIntervention.name}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Efficiency:</span>
-                        <span className="text-green-600 font-medium">-{selectedIntervention.efficiency}%</span>
-                      </div>
-                      <p className="text-xs text-gray-500 mt-2">{selectedIntervention.description}</p>
-                    </div>
-                  </Card>
-                )}
-              </div>
-
-              {/* Center Column: Map (Span 2) */}
-              <div className="lg:col-span-2 min-h-[500px]">
-                <FixedGridMap
-                  cellEmissions={cellEmissions}
-                  onCellSelect={handleCellSelect}
-                  selectedCellId={selectedCell?.id || null}
-                />
-              </div>
-              {/* Intervention List - right side only */}
-              <div className="lg:col-span-1">
-                <InterventionPanel
-                  availableInterventions={availableInterventions}
-                  placedInterventions={placedInterventions}
-                  selectedCellId={selectedCell?.id || null}
-                  selectedCellType={selectedCell?.type || null}
-                  onPlaceIntervention={handlePlaceIntervention}
-                  onRemoveIntervention={handleRemoveIntervention}
-                  onSelectIntervention={setSelectedIntervention}
-                  selectedIntervention={selectedIntervention}
-                />
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="simulation" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <SimulationControls
-                parameters={parameters}
-                onParameterChange={handleParameterChange}
-                onRunSimulation={handleRunSimulation}
-                onResetSimulation={() => {
-                  const defaultParams = {
-                    green: 30,
-                    building: 60,
-                    water: 15,
-                    vehicles: 70,
-                    industrial: 50,
-                    energy: 65,
-                    congestion: 55,
-                    publicTransport: 40,
-                  };
-                  setParameters(defaultParams);
-                  // Reset current cell's simulation parameters
-                  if (selectedCell) {
-                    setGridData(prev => prev.map(cell =>
-                      cell.id === selectedCell.id
-                        ? { ...cell, simulationParams: { ...defaultParams } }
-                        : cell
-                    ));
-                  }
-                  updateGridDataFromParameters(defaultParams);
-                  toast.success('Parameters reset to default');
-                }}
-                onSaveScenario={() => {
-                  toast.success('Scenario saved as "Custom Scenario"');
-                  setCurrentScenario('Custom Scenario');
-                }}
-                isRunning={isSimulationRunning}
-                currentScenario={currentScenario}
-                selectedCellId={selectedCell?.id || null}
-              />
-              {/* Map - full width */}
-              <div className="lg:col-span-2">
-                <FixedGridMap
-                  cellEmissions={cellEmissions}
-                  onCellSelect={handleCellSelect}
-                  selectedCellId={selectedCell?.id || null}
-                  affectedCellIds={getAffectedCellIds()}
-                />
-              </div>
-            </div>
-
-            {/* Before/After Analysis Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Before/After KPI Comparison */}
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-4">Before/After Comparison</h3>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-center p-3 bg-red-50 rounded-lg">
-                      <div className="text-sm text-gray-600">Before Simulation</div>
-                      <div className="text-2xl font-bold text-red-600">{baselineKPIs.totalEmissions.toFixed(1)}</div>
-                      <div className="text-xs text-gray-500">tons CO₂/year</div>
-                    </div>
-                    <div className="text-center p-3 bg-green-50 rounded-lg">
-                      <div className="text-sm text-gray-600">After Simulation</div>
-                      <div className="text-2xl font-bold text-green-600">{currentKPIs.totalEmissions.toFixed(1)}</div>
-                      <div className="text-xs text-gray-500">tons CO₂/year</div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Emission Reduction:</span>
-                      <span className={`text-sm font-semibold ${currentKPIs.emissionReduction >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {currentKPIs.emissionReduction.toFixed(1)}%
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Total Savings:</span>
-                      <span className="text-sm font-semibold text-green-600">
-                        {currentKPIs.projectedSavings.toFixed(1)} tons/year
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Hotspots Remaining:</span>
-                      <span className="text-sm font-semibold text-orange-600">
-                        {currentKPIs.hotspotCount}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </Card>
-
-              {/* Before/After Chart */}
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-4">Emission Impact</h3>
-                <ResponsiveContainer width="100%" height={200}>
-                  <BarChart data={[
-                    {
-                      category: 'Total Emissions',
-                      before: baselineKPIs.totalEmissions,
-                      after: currentKPIs.totalEmissions,
-                    },
-                    {
-                      category: 'Hotspots',
-                      before: baselineKPIs.hotspotCount,
-                      after: currentKPIs.hotspotCount,
-                    }
-                  ]}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="category" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="before" fill="#ef4444" name="Before" />
-                    <Bar dataKey="after" fill="#22c55e" name="After" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </Card>
-            </div>
-
-            {/* Simulation Legend */}
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Simulation Legend</h3>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-blue-600 rounded border-2 border-blue-600"></div>
-                  <span className="text-sm">Selected Cell</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-orange-400 rounded border-2 border-orange-400"></div>
-                  <span className="text-sm">Affected Area</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-red-500 rounded"></div>
-                  <span className="text-sm">Very High (&gt;250 tons)</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-orange-500 rounded"></div>
-                  <span className="text-sm">High (150-250 tons)</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-yellow-500 rounded"></div>
-                  <span className="text-sm">Medium (50-150 tons)</span>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-green-500 rounded"></div>
-                  <span className="text-sm">Low (&lt;50 tons)</span>
-                </div>
-              </div>
-              <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                <p className="text-sm text-blue-800">
-                  💡 Select a cell on the map, then adjust the sliders to see localized impact on that cell and its 8 neighboring cells.
-                </p>
-              </div>
-            </Card>
-          </TabsContent>
-          <TabsContent value="prediction" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-              {/* Left Panel - Controls */}
-              <div className="flex flex-col h-[calc(100vh-250px)]">
-                <div className="flex-1 overflow-y-auto">
-                  <div className="p-6 bg-white border rounded-lg shadow-sm">
-                    <h2 className="text-xl font-semibold mb-4">CO₂ Prediction Model</h2>
-
-                    {/* Location Search */}
-                    <div className="mb-6">
-                      <Label htmlFor="location-search" className="mb-2 block">
-                        Location Search
-                      </Label>
-                      <div className="flex gap-2">
-                        <Input
-                          id="location-search"
-                          type="text"
-                          placeholder="Enter location..."
-                          value={locationQuery}
-                          onChange={(e) => setLocationQuery(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              searchLocation(locationQuery);
-                            }
-                          }}
-                          className="flex-1"
-                        />
-                        <Button
-                          onClick={() => searchLocation(locationQuery)}
-                          className="bg-blue-600 text-white"
-                        >
-                          <Search className="w-4 h-4 mr-2" />
-                          Search
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Growth Factor Sliders */}
-                    <div className="space-y-6 mb-6">
-                      <div>
-                        <div className="flex justify-between items-center mb-2">
-                          <Label htmlFor="population-growth">Population Growth</Label>
-                          <span className="text-sm text-gray-600">{populationGrowth}%</span>
-                        </div>
-                        <Slider
-                          id="population-growth"
-                          min={0}
-                          max={10}
-                          step={0.1}
-                          value={[populationGrowth]}
-                          onValueChange={(value) => setPopulationGrowth(value[0])}
-                        />
-                      </div>
-
-                      <div>
-                        <div className="flex justify-between items-center mb-2">
-                          <Label htmlFor="vehicle-growth">Vehicle Growth</Label>
-                          <span className="text-sm text-gray-600">{vehicleGrowth}%</span>
-                        </div>
-                        <Slider
-                          id="vehicle-growth"
-                          min={0}
-                          max={15}
-                          step={0.1}
-                          value={[vehicleGrowth]}
-                          onValueChange={(value) => setVehicleGrowth(value[0])}
-                        />
-                      </div>
-
-                      <div>
-                        <div className="flex justify-between items-center mb-2">
-                          <Label htmlFor="industrial-growth">Industrial Growth</Label>
-                          <span className="text-sm text-gray-600">{industrialGrowth}%</span>
-                        </div>
-                        <Slider
-                          id="industrial-growth"
-                          min={0}
-                          max={20}
-                          step={0.1}
-                          value={[industrialGrowth]}
-                          onValueChange={(value) => setIndustrialGrowth(value[0])}
-                        />
-                      </div>
-
-                      <div>
-                        <div className="flex justify-between items-center mb-2">
-                          <Label htmlFor="residential-growth">Residential Growth</Label>
-                          <span className="text-sm text-gray-600">{residentialGrowth}%</span>
-                        </div>
-                        <Slider
-                          id="residential-growth"
-                          min={0}
-                          max={10}
-                          step={0.1}
-                          value={[residentialGrowth]}
-                          onValueChange={(value) => setResidentialGrowth(value[0])}
-                        />
-                      </div>
-
-                      <div>
-                        <div className="flex justify-between items-center mb-2">
-                          <Label htmlFor="commercial-growth">Commercial Growth</Label>
-                          <span className="text-sm text-gray-600">{commercialGrowth}%</span>
-                        </div>
-                        <Slider
-                          id="commercial-growth"
-                          min={0}
-                          max={10}
-                          step={0.1}
-                          value={[commercialGrowth]}
-                          onValueChange={(value) => setCommercialGrowth(value[0])}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Prediction Years Input */}
-                    <div className="mb-6">
-                      <Label htmlFor="prediction-years" className="mb-2 block">
-                        Prediction Years
-                      </Label>
-                      <Input
-                        id="prediction-years"
-                        type="number"
-                        min={1}
-                        max={20}
-                        value={predictionYears}
-                        onChange={(e) => {
-                          const val = parseInt(e.target.value);
-                          if (val >= 1 && val <= 20) {
-                            setPredictionYears(val);
-                          }
-                        }}
-                        className="w-full"
-                      />
-                    </div>
-
-                    {/* Run Prediction Button */}
-                    <div className="mt-4">
-                      <Button
-                        onClick={() => {
-                          // Validation checks
-                          if (!selectedLocation) {
-                            toast.error("Please select a location first");
-                            return;
-                          }
-
-                          if (predictionYears <= 0) {
-                            toast.error("Prediction years must be greater than 0");
-                            return;
-                          }
-
-                          // Show running toast
-                          toast.info("Running prediction...");
-
-                          // Run prediction
-                          runMonteCarloPrediction();
-
-                          // Show completion toast
-                          toast.success("Prediction complete! 🎉");
-                        }}
-                        className="w-full mt-4 bg-black text-white py-3 text-lg font-semibold rounded-lg"
-                      >
-                        Run Prediction
-                      </Button>
-                    </div>
-
-                    {/* Prediction Summary Card */}
-                    {predictionResults.length > 0 && (
-                      <div className="mt-6 p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
-                        <h3 className="text-lg font-semibold mb-4">Prediction Summary</h3>
-                        <div className="space-y-3">
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm text-gray-600">Final Year Emission:</span>
-                            <span className="text-sm font-semibold text-gray-800">
-                              {predictionSummary.finalYearEmission.toFixed(2)} tons CO₂
-                            </span>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm text-gray-600">Average Annual Growth Rate:</span>
-                            <span className={`text-sm font-semibold ${predictionSummary.averageGrowthRate >= 0 ? 'text-red-600' : 'text-green-600'}`}>
-                              {predictionSummary.averageGrowthRate >= 0 ? '+' : ''}{predictionSummary.averageGrowthRate.toFixed(2)}%
-                            </span>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm text-gray-600">Highest Contributing Sector:</span>
-                            <span className="text-sm font-semibold text-gray-800">
-                              {predictionSummary.highestContributingSector}
-                            </span>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm text-gray-600">Monte Carlo Confidence Score:</span>
-                            <span className={`text-sm font-semibold ${predictionSummary.confidenceScore >= 70 ? 'text-green-600' :
-                              predictionSummary.confidenceScore >= 50 ? 'text-yellow-600' :
-                                'text-red-600'
-                              }`}>
-                              {predictionSummary.confidenceScore.toFixed(1)}%
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Right Panel - Results */}
-              <div className="p-6 bg-white border rounded-lg shadow-sm">
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="text-lg font-semibold">Predicted CO₂ Emissions</h3>
-                  {predictionResults.length > 0 && (
-                    <Button
-                      onClick={() => setShowCharts(!showCharts)}
-                      variant="outline"
-                      size="sm"
-                      className="text-xs"
-                    >
-                      {showCharts ? 'Hide' : 'Show'}
-                    </Button>
-                  )}
-                </div>
-                {selectedLocation && (
-                  <p className="text-sm text-gray-600 mb-4">
-                    Location: <span className="font-medium text-gray-800">{selectedLocation.name}</span>
-                  </p>
-                )}
-
-                {predictionResults.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    <p>Run prediction to generate results</p>
-                  </div>
-                ) : (
-                  <div className="mt-4 space-y-6">
-                    {showCharts ? (
-                      /* Charts Section */
-                      <div className="space-y-6">
-                        {/* Line Chart - CO₂ Emissions Over Time */}
-                        <div className="p-4 bg-gray-50 rounded-lg">
-                          <h4 className="text-lg font-semibold mb-4">CO₂ Emissions Trend</h4>
-                          <ResponsiveContainer width="100%" height={300}>
-                            <LineChart data={predictionResults.map(r => ({ year: r.year.toString(), emission: r.emission }))}>
-                              <CartesianGrid strokeDasharray="3 3" />
-                              <XAxis dataKey="year" />
-                              <YAxis />
-                              <Tooltip
-                                formatter={(value: number) => [`${value.toFixed(2)} tons CO₂`, 'Emission']}
-                              />
-                              <Legend />
-                              <Line
-                                type="monotone"
-                                dataKey="emission"
-                                stroke="#3b82f6"
-                                strokeWidth={2}
-                                name="Predicted CO₂ Emission"
-                                dot={{ r: 4 }}
-                              />
-                            </LineChart>
-                          </ResponsiveContainer>
-                        </div>
-
-                        {/* Pie Chart - Sector Contribution */}
-                        <div className="p-4 bg-gray-50 rounded-lg">
-                          <h4 className="text-lg font-semibold mb-4">Sector Contribution Breakdown</h4>
-                          <ResponsiveContainer width="100%" height={300}>
-                            <PieChart>
-                              <Pie
-                                data={calculateSectorContributions()}
-                                cx="50%"
-                                cy="50%"
-                                labelLine={false}
-                                label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
-                                outerRadius={100}
-                                fill="#8884d8"
-                                dataKey="value"
-                              >
-                                {calculateSectorContributions().map((entry, index) => (
-                                  <Cell key={`cell-${index}`} fill={entry.color} />
-                                ))}
-                              </Pie>
-                              <Tooltip
-                                formatter={(value: number) => [`${value.toFixed(2)} tons CO₂`, 'Emission']}
-                              />
-                              <Legend />
-                            </PieChart>
-                          </ResponsiveContainer>
                         </div>
                       </div>
                     ) : (
-                      /* Compact Table */
-                      <div>
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Year</TableHead>
-                              <TableHead className="text-right">Predicted CO₂ Emission (tons)</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {predictionResults.map((result, index) => (
-                              <TableRow key={index}>
-                                <TableCell className="font-medium">{result.year}</TableCell>
-                                <TableCell className="text-right text-blue-600 font-semibold">
-                                  {result.emission.toFixed(2)}
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
+                      <div className="flex flex-col items-center justify-center h-40 text-gray-400 text-center">
+                        <Map className="w-12 h-12 mb-2 opacity-20" />
+                        <p>Select a grid cell on the map to view details</p>
                       </div>
                     )}
-                  </div>
-                )}
+                  </Card>
+
+                  {/* Intervention Details Linked to Selection */}
+                  {selectedIntervention && (
+                    <Card className="p-4 animate-in slide-in-from-top duration-300 border-blue-200 bg-blue-50/50">
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="text-2xl">{selectedIntervention.icon}</span>
+                        <h3 className="text-lg font-semibold">New Intervention</h3>
+                      </div>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Type:</span>
+                          <span className="font-medium">{selectedIntervention.name}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Efficiency:</span>
+                          <span className="text-green-600 font-medium">-{selectedIntervention.efficiency}%</span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-2">{selectedIntervention.description}</p>
+                      </div>
+                    </Card>
+                  )}
+                </div>
+
+                {/* Center Column: Map (Span 2) */}
+                <div className="lg:col-span-2 min-h-[500px]">
+                  <FixedGridMap
+                    cellEmissions={cellEmissions}
+                    onCellSelect={handleCellSelect}
+                    selectedCellId={selectedCell?.id || null}
+                  />
+                </div>
+                {/* Intervention List - right side only */}
+                <div className="lg:col-span-1">
+                  <InterventionPanel
+                    availableInterventions={availableInterventions}
+                    placedInterventions={placedInterventions}
+                    selectedCellId={selectedCell?.id || null}
+                    selectedCellType={selectedCell?.type || null}
+                    onPlaceIntervention={handlePlaceIntervention}
+                    onRemoveIntervention={handleRemoveIntervention}
+                    onSelectIntervention={setSelectedIntervention}
+                    selectedIntervention={selectedIntervention}
+                  />
+                </div>
               </div>
-            </div>
-          </TabsContent>
-        </Tabs>
-      </div>
+            </TabsContent>
+
+            <TabsContent value="simulation" className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <SimulationControls
+                  parameters={parameters}
+                  onParameterChange={handleParameterChange}
+                  onRunSimulation={handleRunSimulation}
+                  onResetSimulation={() => {
+                    const defaultParams = {
+                      green: 30,
+                      building: 60,
+                      water: 15,
+                      vehicles: 70,
+                      industrial: 50,
+                      energy: 65,
+                      congestion: 55,
+                      publicTransport: 40,
+                    };
+                    setParameters(defaultParams);
+                    // Reset current cell's simulation parameters
+                    if (selectedCell) {
+                      setGridData(prev => prev.map(cell =>
+                        cell.id === selectedCell.id
+                          ? { ...cell, simulationParams: { ...defaultParams } }
+                          : cell
+                      ));
+                    }
+                    updateGridDataFromParameters(defaultParams);
+                    toast.success('Parameters reset to default');
+                  }}
+                  onSaveScenario={() => {
+                    toast.success('Scenario saved as "Custom Scenario"');
+                    setCurrentScenario('Custom Scenario');
+                  }}
+                  isRunning={isSimulationRunning}
+                  currentScenario={currentScenario}
+                  selectedCellId={selectedCell?.id || null}
+                />
+                {/* Map - full width */}
+                <div className="lg:col-span-2">
+                  <FixedGridMap
+                    cellEmissions={cellEmissions}
+                    onCellSelect={handleCellSelect}
+                    selectedCellId={selectedCell?.id || null}
+                    affectedCellIds={getAffectedCellIds()}
+                  />
+                </div>
+              </div>
+
+              {/* Before/After Analysis Section */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Before/After KPI Comparison */}
+                <Card className="p-6">
+                  <h3 className="text-lg font-semibold mb-4">Before/After Comparison</h3>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="text-center p-3 bg-red-50 rounded-lg">
+                        <div className="text-sm text-gray-600">Before Simulation</div>
+                        <div className="text-2xl font-bold text-red-600">{baselineKPIs.totalEmissions.toFixed(1)}</div>
+                        <div className="text-xs text-gray-500">tons CO₂/year</div>
+                      </div>
+                      <div className="text-center p-3 bg-green-50 rounded-lg">
+                        <div className="text-sm text-gray-600">After Simulation</div>
+                        <div className="text-2xl font-bold text-green-600">{currentKPIs.totalEmissions.toFixed(1)}</div>
+                        <div className="text-xs text-gray-500">tons CO₂/year</div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Emission Reduction:</span>
+                        <span className={`text-sm font-semibold ${currentKPIs.emissionReduction >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {currentKPIs.emissionReduction.toFixed(1)}%
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Total Savings:</span>
+                        <span className="text-sm font-semibold text-green-600">
+                          {currentKPIs.projectedSavings.toFixed(1)} tons/year
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Hotspots Remaining:</span>
+                        <span className="text-sm font-semibold text-orange-600">
+                          {currentKPIs.hotspotCount}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+
+                {/* Before/After Chart */}
+                <Card className="p-6">
+                  <h3 className="text-lg font-semibold mb-4">Emission Impact</h3>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <BarChart data={[
+                      {
+                        category: 'Total Emissions',
+                        before: baselineKPIs.totalEmissions,
+                        after: currentKPIs.totalEmissions,
+                      },
+                      {
+                        category: 'Hotspots',
+                        before: baselineKPIs.hotspotCount,
+                        after: currentKPIs.hotspotCount,
+                      }
+                    ]}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="category" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="before" fill="#ef4444" name="Before" />
+                      <Bar dataKey="after" fill="#22c55e" name="After" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </Card>
+              </div>
+
+              {/* Simulation Legend */}
+              <Card className="p-6">
+                <h3 className="text-lg font-semibold mb-4">Simulation Legend</h3>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-blue-600 rounded border-2 border-blue-600"></div>
+                    <span className="text-sm">Selected Cell</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-orange-400 rounded border-2 border-orange-400"></div>
+                    <span className="text-sm">Affected Area</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-red-500 rounded"></div>
+                    <span className="text-sm">Very High (&gt;250 tons)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-orange-500 rounded"></div>
+                    <span className="text-sm">High (150-250 tons)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-yellow-500 rounded"></div>
+                    <span className="text-sm">Medium (50-150 tons)</span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-green-500 rounded"></div>
+                    <span className="text-sm">Low (&lt;50 tons)</span>
+                  </div>
+                </div>
+                <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                  <p className="text-sm text-blue-800">
+                    💡 Select a cell on the map, then adjust the sliders to see localized impact on that cell and its 8 neighboring cells.
+                  </p>
+                </div>
+              </Card>
+            </TabsContent>
+            <TabsContent value="prediction" className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                {/* Left Panel - Controls */}
+                <div className="flex flex-col h-[calc(100vh-250px)]">
+                  <div className="flex-1 overflow-y-auto">
+                    <div className="p-6 bg-white border rounded-lg shadow-sm">
+                      <h2 className="text-xl font-semibold mb-4">CO₂ Prediction Model</h2>
+
+                      {/* Location Search */}
+                      <div className="mb-6">
+                        <Label htmlFor="location-search" className="mb-2 block">
+                          Location Search
+                        </Label>
+                        <div className="flex gap-2">
+                          <Input
+                            id="location-search"
+                            type="text"
+                            placeholder="Enter location..."
+                            value={locationQuery}
+                            onChange={(e) => setLocationQuery(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                searchLocation(locationQuery);
+                              }
+                            }}
+                            className="flex-1"
+                          />
+                          <Button
+                            onClick={() => searchLocation(locationQuery)}
+                            className="bg-blue-600 text-white"
+                          >
+                            <Search className="w-4 h-4 mr-2" />
+                            Search
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Growth Factor Sliders */}
+                      <div className="space-y-6 mb-6">
+                        <div>
+                          <div className="flex justify-between items-center mb-2">
+                            <Label htmlFor="population-growth">Population Growth</Label>
+                            <span className="text-sm text-gray-600">{populationGrowth}%</span>
+                          </div>
+                          <Slider
+                            id="population-growth"
+                            min={0}
+                            max={10}
+                            step={0.1}
+                            value={[populationGrowth]}
+                            onValueChange={(value) => setPopulationGrowth(value[0])}
+                          />
+                        </div>
+
+                        <div>
+                          <div className="flex justify-between items-center mb-2">
+                            <Label htmlFor="vehicle-growth">Vehicle Growth</Label>
+                            <span className="text-sm text-gray-600">{vehicleGrowth}%</span>
+                          </div>
+                          <Slider
+                            id="vehicle-growth"
+                            min={0}
+                            max={15}
+                            step={0.1}
+                            value={[vehicleGrowth]}
+                            onValueChange={(value) => setVehicleGrowth(value[0])}
+                          />
+                        </div>
+
+                        <div>
+                          <div className="flex justify-between items-center mb-2">
+                            <Label htmlFor="industrial-growth">Industrial Growth</Label>
+                            <span className="text-sm text-gray-600">{industrialGrowth}%</span>
+                          </div>
+                          <Slider
+                            id="industrial-growth"
+                            min={0}
+                            max={20}
+                            step={0.1}
+                            value={[industrialGrowth]}
+                            onValueChange={(value) => setIndustrialGrowth(value[0])}
+                          />
+                        </div>
+
+                        <div>
+                          <div className="flex justify-between items-center mb-2">
+                            <Label htmlFor="residential-growth">Residential Growth</Label>
+                            <span className="text-sm text-gray-600">{residentialGrowth}%</span>
+                          </div>
+                          <Slider
+                            id="residential-growth"
+                            min={0}
+                            max={10}
+                            step={0.1}
+                            value={[residentialGrowth]}
+                            onValueChange={(value) => setResidentialGrowth(value[0])}
+                          />
+                        </div>
+
+                        <div>
+                          <div className="flex justify-between items-center mb-2">
+                            <Label htmlFor="commercial-growth">Commercial Growth</Label>
+                            <span className="text-sm text-gray-600">{commercialGrowth}%</span>
+                          </div>
+                          <Slider
+                            id="commercial-growth"
+                            min={0}
+                            max={10}
+                            step={0.1}
+                            value={[commercialGrowth]}
+                            onValueChange={(value) => setCommercialGrowth(value[0])}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Prediction Years Input */}
+                      <div className="mb-6">
+                        <Label htmlFor="prediction-years" className="mb-2 block">
+                          Prediction Years
+                        </Label>
+                        <Input
+                          id="prediction-years"
+                          type="number"
+                          min={1}
+                          max={20}
+                          value={predictionYears}
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value);
+                            if (val >= 1 && val <= 20) {
+                              setPredictionYears(val);
+                            }
+                          }}
+                          className="w-full"
+                        />
+                      </div>
+
+                      {/* Run Prediction Button */}
+                      <div className="mt-4">
+                        <Button
+                          onClick={() => {
+                            // Validation checks
+                            if (!selectedLocation) {
+                              toast.error("Please select a location first");
+                              return;
+                            }
+
+                            if (predictionYears <= 0) {
+                              toast.error("Prediction years must be greater than 0");
+                              return;
+                            }
+
+                            // Show running toast
+                            toast.info("Running prediction...");
+
+                            // Run prediction
+                            runMonteCarloPrediction();
+
+                            // Show completion toast
+                            toast.success("Prediction complete! 🎉");
+                          }}
+                          className="w-full mt-4 bg-black text-white py-3 text-lg font-semibold rounded-lg"
+                        >
+                          Run Prediction
+                        </Button>
+                      </div>
+
+                      {/* Prediction Summary Card */}
+                      {predictionResults.length > 0 && (
+                        <div className="mt-6 p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
+                          <h3 className="text-lg font-semibold mb-4">Prediction Summary</h3>
+                          <div className="space-y-3">
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-gray-600">Final Year Emission:</span>
+                              <span className="text-sm font-semibold text-gray-800">
+                                {predictionSummary.finalYearEmission.toFixed(2)} tons CO₂
+                              </span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-gray-600">Average Annual Growth Rate:</span>
+                              <span className={`text-sm font-semibold ${predictionSummary.averageGrowthRate >= 0 ? 'text-red-600' : 'text-green-600'}`}>
+                                {predictionSummary.averageGrowthRate >= 0 ? '+' : ''}{predictionSummary.averageGrowthRate.toFixed(2)}%
+                              </span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-gray-600">Highest Contributing Sector:</span>
+                              <span className="text-sm font-semibold text-gray-800">
+                                {predictionSummary.highestContributingSector}
+                              </span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-gray-600">Monte Carlo Confidence Score:</span>
+                              <span className={`text-sm font-semibold ${predictionSummary.confidenceScore >= 70 ? 'text-green-600' :
+                                predictionSummary.confidenceScore >= 50 ? 'text-yellow-600' :
+                                  'text-red-600'
+                                }`}>
+                                {predictionSummary.confidenceScore.toFixed(1)}%
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Panel - Results */}
+                <div className="p-6 bg-white border rounded-lg shadow-sm">
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="text-lg font-semibold">Predicted CO₂ Emissions</h3>
+                    {predictionResults.length > 0 && (
+                      <Button
+                        onClick={() => setShowCharts(!showCharts)}
+                        variant="outline"
+                        size="sm"
+                        className="text-xs"
+                      >
+                        {showCharts ? 'Hide' : 'Show'}
+                      </Button>
+                    )}
+                  </div>
+                  {selectedLocation && (
+                    <p className="text-sm text-gray-600 mb-4">
+                      Location: <span className="font-medium text-gray-800">{selectedLocation.name}</span>
+                    </p>
+                  )}
+
+                  {predictionResults.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <p>Run prediction to generate results</p>
+                    </div>
+                  ) : (
+                    <div className="mt-4 space-y-6">
+                      {showCharts ? (
+                        /* Charts Section */
+                        <div className="space-y-6">
+                          {/* Line Chart - CO₂ Emissions Over Time */}
+                          <div className="p-4 bg-gray-50 rounded-lg">
+                            <h4 className="text-lg font-semibold mb-4">CO₂ Emissions Trend</h4>
+                            <ResponsiveContainer width="100%" height={300}>
+                              <LineChart data={predictionResults.map(r => ({ year: r.year.toString(), emission: r.emission }))}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="year" />
+                                <YAxis />
+                                <Tooltip
+                                  formatter={(value: number) => [`${value.toFixed(2)} tons CO₂`, 'Emission']}
+                                />
+                                <Legend />
+                                <Line
+                                  type="monotone"
+                                  dataKey="emission"
+                                  stroke="#3b82f6"
+                                  strokeWidth={2}
+                                  name="Predicted CO₂ Emission"
+                                  dot={{ r: 4 }}
+                                />
+                              </LineChart>
+                            </ResponsiveContainer>
+                          </div>
+
+                          {/* Pie Chart - Sector Contribution */}
+                          <div className="p-4 bg-gray-50 rounded-lg">
+                            <h4 className="text-lg font-semibold mb-4">Sector Contribution Breakdown</h4>
+                            <ResponsiveContainer width="100%" height={300}>
+                              <PieChart>
+                                <Pie
+                                  data={calculateSectorContributions()}
+                                  cx="50%"
+                                  cy="50%"
+                                  labelLine={false}
+                                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
+                                  outerRadius={100}
+                                  fill="#8884d8"
+                                  dataKey="value"
+                                >
+                                  {calculateSectorContributions().map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={entry.color} />
+                                  ))}
+                                </Pie>
+                                <Tooltip
+                                  formatter={(value: number) => [`${value.toFixed(2)} tons CO₂`, 'Emission']}
+                                />
+                                <Legend />
+                              </PieChart>
+                            </ResponsiveContainer>
+                          </div>
+                        </div>
+                      ) : (
+                        /* Compact Table */
+                        <div>
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Year</TableHead>
+                                <TableHead className="text-right">Predicted CO₂ Emission (tons)</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {predictionResults.map((result, index) => (
+                                <TableRow key={index}>
+                                  <TableCell className="font-medium">{result.year}</TableCell>
+                                  <TableCell className="text-right text-blue-600 font-semibold">
+                                    {result.emission.toFixed(2)}
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
       </div>
     </div>
   );
